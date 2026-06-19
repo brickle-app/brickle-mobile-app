@@ -1,0 +1,69 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+- Use this git standar for generate the commits 
+
+## Conventional Commits
+
+<type><(scope)>: <subject><(body)>
+
+## Type
+
+- **feat**: A new feature.
+- **fix**: Bug fix.
+- **docs**: Documentation changes or improvements (README, comments, etc.).
+- **style**: Formatting changes that do not affect code logic (spaces, semicolons, etc.).
+- **refactor**: Code changes that neither fix a bug nor add a feature but improve code structure.
+- **test**: Add or modify tests.
+- **chore**: Minor changes or administrative tasks (e.g., dependency updates).
+- **build**: Changes related to the build system (compilation, CI/CD configurations).
+- **perf**: Performance improvements.
+- **ci**: Changes to CI configuration files and scripts.
+- **BREAKING CHANGE**: Incompatible change that requires special attention.
+- **conflict**: When merging a branch and resolving conflicts.
+
+### Scoped Scope
+
+Due to the structure of a packaged solution in a monorepo, we propose that the scope is defined using a scoped approach, for example:
+
+If the change was made in the CLIENT, SERVICE, API, or MODELS project and also:
+
+Specify the part of the code that was affected (e.g., a module, service, or component).
+
+Examples:
+- feat(auth-service): adds JWT-based authentication
+- feat(users-client): adds CRUD for users
+- fix(questions-API): removes patch in questions module
+- docs(incidents-models): creates readme of dto for api layer
+
+## **Subject**
+
+A short, present-tense description of the change.
+
+### **Body (Optional)**
+
+Provide additional details about the change: what problem it solves or the motivation behind it.
+
+### **Use third-person present tense verbs (`Adds`, `Changes`, `Fixes`, `Removes`, …)**
+
+Although it may sound a bit direct, using the present tense is a way to express the action performed in the commit. For example:
+- `Adds` means a new file is added.
+- `Changes` means an existing file is modified.
+- `Fixes` means a bug is fixed.
+
+Examples:
+- …adds a new search feature
+- …fixes a problem with the topbar
+- …changes the default system color
+- …removes a random notification
+
+**Maximum of 20 changes per commit**
+
+### **Limit your commit message to a maximum of 50 characters**
+
+Be short and concise. If you have too much to explain, your commit might be doing too many things. Can you split it into different commits? If so, do it.

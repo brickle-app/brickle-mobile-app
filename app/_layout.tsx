@@ -1,0 +1,220 @@
+import { useEffect, useState } from "react";
+import { Slot, useRouter, usePathname } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import "./global.css";
+import { StatusBar, View, PanResponder } from "react-native";
+import { SearchModal } from "@/src/components/ui/searchModal/SearchModal";
+import { SessionExpiredModal, AppUpdateModal } from "@/src/components/modals";
+import { useAppUpdate } from "@/src/hooks/useAppUpdate";
+import { ErrorBoundary } from "@/src/components/ErrorBoundary";
+import { registerSessionModal, updateUserActivity, startInactivityTimer, stopInactivityTimer, startTokenExpirationMonitoring, stopTokenExpirationMonitoring } from "@/src/utils/sessionManager";
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { authStore } from "@/src/store/auth.store";
+import { useBlockchainConfigStore } from "@/src/store/blockchainConfig.store";
+import { usePinStore } from "@/src/store/pin.store";
+import { validateEnv } from "@/src/utils/env.validator";
+import * as Notifications from 'expo-notifications';
+import { updateUser } from "@/src/services/brickle.service";
+import { registerForPushNotificationsAsync } from "@/src/utils/notifications";
+import { notificationsStore } from "@/src/store/notifications.store";
+import { NotificationStatus, NotificationType } from "@/src/types/notifications.types";
+import { useSessionActivity } from "@/src/hooks/useSessionActivity";
+
+// Configure splash screen options
+SplashScreen.preventAutoHideAsync().catch(() => {
+  /* rejects only on Android */
+});
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
+
+export default function RootLayout() {
+  const { user, isAuthenticated } = authStore();
+  const hasPin = usePinStore((s) => s.hasPin);
+  const isLocked = usePinStore((s) => s.isLocked);
+  const router = useRouter();
+  const pathname = usePathname();
+  const [appIsReady, setAppIsReady] = useState(false);
+  const [isSessionModalVisible, setIsSessionModalVisible] = useState(false);
+  const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
+  const { updateAvailable, latestVersion, openStore, checked } = useAppUpdate();
+  const { addNotification } = notificationsStore();
+
+  // Initialize session activity tracking (handles PIN lock on background)
+  useSessionActivity();
+
+  // Create PanResponder to detect user interactions
+  const panResponder = PanResponder.create({
+    onStartShouldSetPanResponder: () => {
+      updateUserActivity();
+      return false;
+    },
+    onMoveShouldSetPanResponder: () => false,
+  });
+
+  const onLayoutRootView = async () => {
+    try {
+      await SplashScreen.hideAsync();
+      console.log('✅ Splash screen hidden successfully');
+    } catch (e) {
+      console.warn('⚠️ Error hiding splash screen:', e);
+    }
+  }
+
+  useEffect(() => {
+    const prepare = () => {
+      const isEnvValid = validateEnv();
+      if (!isEnvValid) {
+        console.error('❌ Environment validation failed');
+        return;
+      }
+      console.log('✅ Environment validation passed');
+      setAppIsReady(true);
+    }
+    prepare();
+
+    // Register session modal handlers
+    registerSessionModal(
+      () => setIsSessionModalVisible(true),
+      () => setIsSessionModalVisible(false),
+      router
+    );
+  }, [])
+
+  useEffect(() => {
+    registerForPushNotificationsAsync()
+      .then(token => {
+        console.log('Expo Push Token:', token);
+        if (user?.pushNotificationToken !== token) {
+          updateUser({
+            ...user,
+            pushNotificationToken: token,
+          });
+        }
+
+      })
+      .catch((error: any) => {
+        console.log('Error getting Expo Push Token:', error);
+      });
+
+    const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+      // Convert expo notification to our custom format
+      const customNotification = {
+        id: notification.request.identifier,
+        title: notification.request.content.title || 'Notification',
+        message: notification.request.content.body || '',
+        status: NotificationStatus.UNREAD,
+        icon: 'notifications',
+        createdAt: new Date().toISOString(),
+        type: notification.request.content.data.category as NotificationType
+      };
+      addNotification(customNotification);
+    });
+
+    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log(response);
+    });
+
+    return () => {
+      notificationListener.remove();
+      responseListener.remove();
+    };
+  }, [])
+
+  // Redirect after Slot has mounted; never navigate before the root layout is ready
+  useEffect(() => {
+    if (!appIsReady) return;
+    onLayoutRootView();
+    const path = pathname ?? "";
+    const timeoutId = setTimeout(() => {
+      if (!user) {
+        router.replace("/(stack)/(auth)/login");
+        console.log("✅ Redirecting to login");
+        return;
+      }
+
+      const postponePinSetup =
+        path.includes("register") ||
+        path.includes("complete-profile") ||
+        path.includes("verify-otp") ||
+        path.includes("redirect-handler");
+
+      if (!hasPin) {
+        if (!postponePinSetup && !path.includes("pin-setup")) {
+          router.replace("/(stack)/pin-setup");
+          console.log("✅ Redirecting to pin-setup (PIN obligatorio)");
+        }
+        return;
+      }
+
+      if (hasPin && isLocked) {
+        router.replace("/(stack)/pin-lock");
+        console.log("✅ Redirecting to pin-lock");
+        return;
+      }
+
+      router.replace("/(stack)/(tabs)/dashboard");
+      console.log("✅ Redirecting to dashboard");
+    }, 0);
+    return () => clearTimeout(timeoutId);
+  }, [appIsReady, user, hasPin, isLocked]);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      startInactivityTimer();
+      startTokenExpirationMonitoring();
+      useBlockchainConfigStore.getState().fetchConfig().catch(() => {});
+    } else {
+      stopInactivityTimer();
+      stopTokenExpirationMonitoring();
+    }
+
+    return () => {
+      stopInactivityTimer();
+      stopTokenExpirationMonitoring();
+    };
+  }, [isAuthenticated, user]);
+
+  useEffect(() => {
+    if (checked && updateAvailable) {
+      setIsUpdateModalVisible(true);
+    }
+  }, [checked, updateAvailable]);
+
+  const handleUpdate = () => {
+    setIsUpdateModalVisible(false);
+    openStore();
+  };
+
+  const handleUpdateLater = () => {
+    setIsUpdateModalVisible(false);
+  };
+
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <StatusBar barStyle="dark-content" backgroundColor="#E8F5E9" />
+        <ErrorBoundary onRestart={() => router.replace('/')}>
+          <View style={{ flex: 1, backgroundColor: "#E8F5E9" }} {...panResponder.panHandlers}>
+            <Slot />
+            <SearchModal />
+            <SessionExpiredModal visible={isSessionModalVisible} />
+            <AppUpdateModal
+              visible={isUpdateModalVisible}
+              latestVersion={latestVersion}
+              onUpdate={handleUpdate}
+              onLater={handleUpdateLater}
+            />
+          </View>
+        </ErrorBoundary>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
+  );
+}

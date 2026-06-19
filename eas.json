@@ -1,0 +1,44 @@
+{
+  "cli": {
+    "version": ">= 16.8.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "ios": {
+        "simulator": true
+      },
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "emulator": {
+      "developmentClient": false,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "preview": {
+      "autoIncrement": true,
+      "distribution": "internal",
+      "ios": {
+        "image": "macos-sequoia-15.6-xcode-26.2"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "ios": {
+        "image": "macos-sequoia-15.6-xcode-26.2"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "orbitatech328@gmail.com",
+        "ascAppId": "6748645171",
+        "appleTeamId": "B8RLH4MK4L"
+      }
+    }
+  }
+}

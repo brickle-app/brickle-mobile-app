@@ -1,0 +1,40 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Style Rule: Use of NativeWind and Tailwind CSS
+
+## Objective
+
+To standardize the approach to styling and animations in the project, ensuring consistency, maintainability, and performance optimization through the exclusive use of NativeWind and Tailwind CSS.
+
+## Strict Guidelines
+
+1.  **Exclusive Use of NativeWind/Tailwind:**
+    *   All styles for React Native components must be implemented using Tailwind CSS utility classes via NativeWind.
+    *   The direct use of React Native's `StyleSheet.create` is prohibited, as are inline styles (`style={{ ... }}`) for defining static visual appearance. Inline styles are permitted *only* for dynamic values that cannot be represented by Tailwind classes (e.g., calculated transforms).
+    *   Tailwind classes should be applied directly in the `className` attribute of components.
+
+2.  **Animations:**
+    *   For animations, prioritize using utilities or approaches compatible with NativeWind/Tailwind if they exist.
+    *   If more complex animations are required, use `react-native-reanimated` or React Native's `Animated` API. However, the definition of visual *states* (start/end of the animation) should, as much as possible, use Tailwind classes managed by component state or animation hooks.
+
+3.  **Consistency and Theming:**
+    *   Use the `tailwind.config.js` configuration to define colors, fonts, spacing, and other design tokens. Avoid "magic" or hardcoded values in components.
+    *   Leverage NativeWind features for dark mode, media queries (responsive design), and states (hover, focus, active) where applicable.
+
+4.  **Optimization:**
+    *   NativeWind compiles styles at build time. Ensure the Tailwind configuration (`content` in `tailwind.config.js`) correctly includes all files where classes are used to prevent accidental purging of necessary styles.
+
+## Justification
+
+-   **Universality:** NativeWind allows sharing styles across platforms (iOS, Android, Web) using the optimal style engine for each.
+-   **Developer Experience (DX):** Tailwind CSS offers a fast and efficient way to style components without context switching (HTML/JSX to CSS). NativeWind integration extends this to React Native.
+-   **Maintainability:** Centralizing style definitions and design tokens in `tailwind.config.js` improves consistency and facilitates refactoring.
+-   **Performance:** NativeWind pre-compiles styles and uses a minimal runtime, optimized for React Native.
+
+## Non-Compliance
+
+Code that does not follow this rule must be refactored to comply. Code reviews must strictly verify adherence to this guideline.
+
