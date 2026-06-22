@@ -3,7 +3,11 @@ import { PartialBrickleUser } from "../types/user.types";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import { usePinStore } from "./pin.store";
+
+const PRIVATE_KEY_STORAGE_KEY = "brickle_private_key";
+const REFRESH_TOKEN_STORAGE_KEY = "brickle_refresh_token";
 
 interface State {
   token: string | null;
@@ -143,6 +147,10 @@ export const authStore = create<State>()(
       logout: async () => {
         try {
           await usePinStore.getState().removePin();
+          await Promise.allSettled([
+            SecureStore.deleteItemAsync(PRIVATE_KEY_STORAGE_KEY),
+            SecureStore.deleteItemAsync(REFRESH_TOKEN_STORAGE_KEY),
+          ]);
           set(initialState);
           // Clear AsyncStorage completely for user data
           AsyncStorage.multiRemove([
@@ -177,6 +185,10 @@ export const authStore = create<State>()(
       reset: async () => {
         try {
           await usePinStore.getState().removePin();
+          await Promise.allSettled([
+            SecureStore.deleteItemAsync(PRIVATE_KEY_STORAGE_KEY),
+            SecureStore.deleteItemAsync(REFRESH_TOKEN_STORAGE_KEY),
+          ]);
           set(initialState);
           // Clear AsyncStorage completely for reset
           AsyncStorage.multiRemove([
@@ -202,6 +214,15 @@ export const authStore = create<State>()(
     {
       name: "auth-storage",
       storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({
+        userEmail: state.userEmail,
+        balance: state.balance,
+        newUser: state.newUser,
+        totalReturn: state.totalReturn,
+        totalInvested: state.totalInvested,
+        currentValue: state.currentValue,
+        roi: state.roi,
+      }),
       onRehydrateStorage: () => (state) => {
         console.log("🔄 Rehydrating auth store...");
         if (state) {

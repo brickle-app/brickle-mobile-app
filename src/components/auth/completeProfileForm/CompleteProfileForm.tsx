@@ -10,7 +10,7 @@ import React from "react";
 import { useCompleteProfileForm } from "@/src/hooks/auth/useCompleteProfileForm";
 import { Ionicons } from "@expo/vector-icons";
 import StepIndicator from "./StepIndicator";
-import { FormField, SelectBottomSheet } from "../../ui/input";
+import { DatePickerField, FormField, SelectBottomSheet } from "../../ui/input";
 import { CompleteProfileFormData } from "@/src/schemes/complete-profile-scheme";
 import { Button } from "../../ui/button/Button";
 import { useRouter } from "expo-router";
@@ -96,6 +96,23 @@ const CompleteProfileForm = () => {
                   );
                 }
 
+                if (field.type === "date") {
+                  const fieldKey = field.id as keyof CompleteProfileFormData;
+                  return (
+                    <DatePickerField
+                      key={field.id}
+                      label={field.label}
+                      placeholder={field.placeholder}
+                      icon={field.icon}
+                      value={String(formData[fieldKey])}
+                      onChangeText={(text) => handleChange(fieldKey, text)}
+                      error={errors[fieldKey]}
+                      containerClassName="w-full"
+                      inputWrapperClassName="!w-full"
+                    />
+                  );
+                }
+
                 return (
                   <FormField
                     key={field.id}
@@ -114,7 +131,6 @@ const CompleteProfileForm = () => {
                         text
                       )
                     }
-                    mask={field.mask}
                     error={errors[field.id as keyof CompleteProfileFormData]}
                     containerClassName="w-full"
                     inputWrapperClassName="!w-full"

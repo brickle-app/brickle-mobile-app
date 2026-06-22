@@ -11,15 +11,15 @@ export const rampifyClient = axios.create({
   },
 });
 
-// Interceptor para debuggear las peticiones
+// Interceptor para debuggear las peticiones sin exponer credenciales/PII en producción
 rampifyClient.interceptors.request.use(
   (config) => {
-    console.log("🚀 Rampify Request:", {
-      method: config.method?.toUpperCase(),
-      url: `${config.baseURL}${config.url}`,
-      headers: config.headers,
-      data: config.data,
-    });
+    if (__DEV__) {
+      console.log("🚀 Rampify Request:", {
+        method: config.method?.toUpperCase(),
+        url: `${config.baseURL}${config.url}`,
+      });
+    }
     return config;
   },
   (error) => {
@@ -31,18 +31,18 @@ rampifyClient.interceptors.request.use(
 // Interceptor para debuggear las respuestas
 rampifyClient.interceptors.response.use(
   (response) => {
-    console.log("✅ Rampify Response:", {
-      status: response.status,
-      statusText: response.statusText,
-      data: response.data,
-    });
+    if (__DEV__) {
+      console.log("✅ Rampify Response:", {
+        status: response.status,
+        statusText: response.statusText,
+      });
+    }
     return response;
   },
   (error) => {
     console.error("❌ Rampify Response Error:", {
       status: error.response?.status,
       statusText: error.response?.statusText,
-      data: error.response?.data,
       message: error.message,
     });
     return Promise.reject(error);

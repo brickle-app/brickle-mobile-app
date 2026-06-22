@@ -1,18 +1,14 @@
 import { z } from "zod";
 import { DocumentTypeEnum } from "../types/user.types";
+import { isAdultDisplayDate } from "../utils/datePicker";
 
-// Custom date validation to accept both yyyy-mm-dd and yyyy/mm/dd formats
 const dateValidation = z
   .string()
   .min(1, "Fecha de nacimiento es requerida")
-  .refine((date) => {
-    const dateRegex = /^\d{2}[-\/]\d{2}[-\/]\d{4}$/;
-    if (!dateRegex.test(date)) return false;
-
-    // Check if it's a valid date
-    const dateObj = new Date(date.replace(/\//g, "-"));
-    return !isNaN(dateObj.getTime());
-  }, "Formato de fecha inválido. Use DD/MM/YYYY");
+  .refine(
+    (date) => isAdultDisplayDate(date),
+    "Debes seleccionar una fecha válida y ser mayor de 18 años"
+  );
 
 export const personalDetailsSchema = z.object({
   firstName: z.string().min(1, "Nombre es requerido"),

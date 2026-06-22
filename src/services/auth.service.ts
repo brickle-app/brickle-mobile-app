@@ -1,7 +1,9 @@
 import * as Google from "expo-auth-session/providers/google";
+import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "expo-router";
+import { Platform } from "react-native";
 import { authStore } from "../store/auth.store";
 import { isAxiosError } from "axios";
 import { startInactivityTimer, startTokenExpirationMonitoring } from "../utils/sessionManager";
@@ -14,6 +16,50 @@ const PRIVATE_KEY_STORAGE_KEY = "brickle_private_key";
 const REFRESH_TOKEN_STORAGE_KEY = "brickle_refresh_token";
 
 const BRICKLE_API_URL = process.env.EXPO_PUBLIC_BRICKLE_API_URL;
+
+export function buildGoogleAuthRequestConfig(
+  env: Partial<Record<string, string | undefined>> = process.env,
+  createRedirectUri = AuthSession.makeRedirectUri
+) {
+  return {
+    webClientId: env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    iosClientId: env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    androidClientId: env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+    redirectUri: createRedirectUri({
+      native: "com.brickle.app:/oauthredirect",
+    }),
+  };
+}
+
+type GoogleAuthResultStatus =
+  | { type: "authenticated"; idToken: string }
+  | { type: "pending_token_exchange" }
+  | { type: "error" };
+
+export function getGoogleAuthResultStatus(result: any): GoogleAuthResultStatus {
+  if (result?.type !== "success") {
+    return { type: "error" };
+  }
+
+  if (result.params?.id_token) {
+    return { type: "authenticated", idToken: result.params.id_token };
+  }
+
+  if (result.params?.code) {
+    return { type: "pending_token_exchange" };
+  }
+
+  return { type: "error" };
+}
+
+export function getGoogleAuthBackendClientId(
+  env: Partial<Record<string, string | undefined>> = process.env,
+  platform: typeof Platform.OS = Platform.OS
+) {
+  if (platform === "ios") return env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+  if (platform === "android") return env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
+  return env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+}
 
 interface AuthResponse {
   accessToken: string;
@@ -31,6 +77,31 @@ interface AuthResponse {
     isBasicProfileComplete: boolean;
     isFullProfileComplete: boolean;
   };
+}
+
+function applyAuthResponse(data: AuthResponse) {
+  const {
+    setAccessToken,
+    setUser,
+    setUserEmail,
+    setIsAuthenticated,
+  } = authStore.getState();
+
+  setAccessToken(data.accessToken);
+  setUserEmail(data.user.email);
+  setUser({
+    id: data.user.id,
+    firstName: data.user.firstName,
+    lastName: data.user.lastName,
+    email: data.user.email,
+    profilePictureUrl: data.user.profilePictureUrl,
+    walletAddress: data.user.walletAddress ?? undefined,
+    phoneNumber: data.user.phoneNumber,
+    termsAccepted: data.user.termsAccepted,
+    isBasicProfileComplete: data.user.isBasicProfileComplete,
+    isFullProfileComplete: data.user.isFullProfileComplete,
+  });
+  setIsAuthenticated(true);
 }
 
 async function storeTokens(accessToken: string, refreshToken: string) {
@@ -75,74 +146,114 @@ export const useGoogleAuth = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [showAuthError, setShowAuthError] = useState(false);
+  const [isAwaitingGoogleToken, setIsAwaitingGoogleToken] = useState(false);
 
-  const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest(
+    buildGoogleAuthRequestConfig()
+  );
 
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: googleWebClientId,
-    webClientId: googleWebClientId,
-    redirectUri: "https://auth.expo.io/@pivelcode/brickle",
-  });
+  const completeGoogleLogin = useCallback(async (idToken: string) => {
+    console.log("[GoogleAuth] Got id_token, exchanging with backend...");
+
+    const res = await fetch(`${BRICKLE_API_URL}/api/auth/google`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken, clientId: getGoogleAuthBackendClientId() }),
+    });
+    console.log("[GoogleAuth] Backend response status:", res.status);
+
+    if (!res.ok) {
+      console.error("Google auth failed", { status: res.status });
+      setShowAuthError(true);
+      return;
+    }
+
+    const data: AuthResponse = await res.json();
+
+    setUserEmail(data.user.email);
+    setAccessToken(data.accessToken);
+    await storeTokens(data.accessToken, data.refreshToken);
+
+    setUser({
+      id: data.user.id,
+      firstName: data.user.firstName,
+      lastName: data.user.lastName,
+      email: data.user.email,
+      profilePictureUrl: data.user.profilePictureUrl,
+      walletAddress: data.user.walletAddress ?? undefined,
+      phoneNumber: data.user.phoneNumber,
+      termsAccepted: data.user.termsAccepted,
+      isBasicProfileComplete: data.user.isBasicProfileComplete,
+      isFullProfileComplete: data.user.isFullProfileComplete,
+    });
+
+    setIsAuthenticated(true);
+    startInactivityTimer();
+    startTokenExpirationMonitoring();
+
+    if (!data.user.isBasicProfileComplete) {
+      router.push("/register");
+    } else {
+      router.push("/dashboard");
+    }
+  }, [router, setAccessToken, setIsAuthenticated, setUser, setUserEmail]);
+
+  useEffect(() => {
+    if (!isAwaitingGoogleToken || !response) return;
+
+    const status = getGoogleAuthResultStatus(response);
+
+    if (status.type === "pending_token_exchange") return;
+
+    setIsAwaitingGoogleToken(false);
+
+    if (status.type === "error") {
+      console.log("[GoogleAuth] Token exchange result was not successful:", response?.type);
+      setShowAuthError(true);
+      return;
+    }
+
+    setIsLoading(true);
+    completeGoogleLogin(status.idToken)
+      .catch((error) => {
+        console.error("Google auth error:", error);
+        setShowAuthError(true);
+      })
+      .finally(() => setIsLoading(false));
+  }, [completeGoogleLogin, isAwaitingGoogleToken, response]);
 
   const handleLogin = useCallback(async () => {
     setIsLoading(true);
+    setIsAwaitingGoogleToken(false);
+    console.log("[GoogleAuth] Starting login flow...");
     try {
+      console.log("[GoogleAuth] Calling promptAsync()...");
       const result = await promptAsync();
-      if (result?.type !== "success" || !result.params?.id_token) {
-        setIsLoading(false);
-        return;
-      }
+      console.log("[GoogleAuth] promptAsync returned:", result?.type);
 
-      const idToken = result.params.id_token;
+      const status = getGoogleAuthResultStatus(result);
 
-      const res = await fetch(`${BRICKLE_API_URL}/api/auth/google`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken, clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID }),
-      });
-
-      if (!res.ok) {
-        console.error("Google auth failed", await res.text());
+      if (status.type === "error") {
+        console.log("[GoogleAuth] Auth result type is not success:", result?.type);
         setShowAuthError(true);
         setIsLoading(false);
         return;
       }
 
-      const data: AuthResponse = await res.json();
-
-      setUserEmail(data.user.email);
-      setAccessToken(data.accessToken);
-      await storeTokens(data.accessToken, data.refreshToken);
-
-      setUser({
-        id: data.user.id,
-        firstName: data.user.firstName,
-        lastName: data.user.lastName,
-        email: data.user.email,
-        profilePictureUrl: data.user.profilePictureUrl,
-        walletAddress: data.user.walletAddress ?? undefined,
-        phoneNumber: data.user.phoneNumber,
-        termsAccepted: data.user.termsAccepted,
-        isBasicProfileComplete: data.user.isBasicProfileComplete,
-        isFullProfileComplete: data.user.isFullProfileComplete,
-      });
-
-      setIsAuthenticated(true);
-      startInactivityTimer();
-      startTokenExpirationMonitoring();
-
-      if (!data.user.isBasicProfileComplete) {
-        router.push("/register");
-      } else {
-        router.push("/dashboard");
+      if (status.type === "pending_token_exchange") {
+        console.log("[GoogleAuth] Waiting for native code exchange to return id_token...");
+        setIsAwaitingGoogleToken(true);
+        return;
       }
+
+      await completeGoogleLogin(status.idToken);
     } catch (error) {
       console.error("Google auth error:", error);
       setShowAuthError(true);
     } finally {
       setIsLoading(false);
     }
-  }, [promptAsync, router, setUserEmail]);
+  }, [completeGoogleLogin, promptAsync]);
 
   const handleRetryLogin = () => {
     setShowAuthError(false);
@@ -232,8 +343,9 @@ export const useVerifyOtp = () => {
       }
 
       const data: AuthResponse = await res.json();
-      console.log("[verifyOtp] response:", JSON.stringify(data));
-      console.log("[verifyOtp] isBasicProfileComplete:", data.user.isBasicProfileComplete);
+      console.log("[verifyOtp] authenticated user profile state:", {
+        isBasicProfileComplete: data.user.isBasicProfileComplete,
+      });
 
       setAccessToken(data.accessToken);
       await storeTokens(data.accessToken, data.refreshToken);
@@ -320,7 +432,7 @@ export const refreshToken = async (): Promise<{ success: boolean; newToken?: str
 
     const data: AuthResponse = await res.json();
 
-    authStore.getState().setAccessToken(data.accessToken);
+    applyAuthResponse(data);
     await storeTokens(data.accessToken, data.refreshToken);
 
     return { success: true, newToken: data.accessToken };
@@ -328,4 +440,9 @@ export const refreshToken = async (): Promise<{ success: boolean; newToken?: str
     console.error("Refresh token error:", error);
     return { success: false };
   }
+};
+
+export const restoreSessionFromRefreshToken = async (): Promise<boolean> => {
+  const refreshResult = await refreshToken();
+  return refreshResult.success;
 };

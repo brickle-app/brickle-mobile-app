@@ -6,7 +6,6 @@ import DiscoverIcon from "@/assets/icons/SVG/Buscar.svg";
 import PortfolioIcon from "@/assets/icons/SVG/Portafolio.svg";
 import WalletIcon from "@/assets/icons/SVG/Wallet.svg";
 import { authStore } from "@/src/store/auth.store";
-import { StandaloneHeader } from "@/src/components";
 
 export default function TabLayout() {
   const { user } = authStore();
@@ -37,7 +36,7 @@ export default function TabLayout() {
         name="dashboard/index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color }) => (
             <HomeIcon width={52} height={52} color={color} />
           ),
         }}
@@ -46,7 +45,7 @@ export default function TabLayout() {
         name="discover/index"
         options={{
           title: "Discover",
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color }) => (
             <DiscoverIcon width={52} height={52} color={color} />
           ),
           header: () => (
@@ -62,7 +61,7 @@ export default function TabLayout() {
         name="portfolio/index"
         options={{
           title: "Portfolio",
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color }) => (
             <PortfolioIcon width={52} height={52} color={color} />
           ),
         }}
@@ -71,7 +70,7 @@ export default function TabLayout() {
         name="wallet/index"
         options={{
           title: "Wallet",
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color }) => (
             <WalletIcon width={52} height={52} color={color} />
           ),
         }}
@@ -136,35 +135,19 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="leasing/index"
-        options={{
-          href: null,
-          header: () => (<></>)
-        }}
-      />
+      <Tabs.Screen name="leasing/index" options={{ href: null, header: () => <></> }} />
       <Tabs.Screen
         name="notifications/index"
         options={{
           href: null,
-          header: () => (
-            <CustomHeader
-              variant="profile"
-              title="Notificaciones"
-            />
-          ),
+          header: () => <CustomHeader variant="profile" title="Notificaciones" />,
         }}
       />
       <Tabs.Screen
         name="my-investments/index"
         options={{
           href: null,
-          header: () => (
-            <CustomHeader
-              variant="profile"
-              title="Mis inversiones"
-            />
-          ),
+          header: () => <CustomHeader variant="profile" title="Mis inversiones" />,
         }}
       />
       <Tabs.Screen

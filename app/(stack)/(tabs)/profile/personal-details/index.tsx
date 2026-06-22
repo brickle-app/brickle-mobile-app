@@ -12,6 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Button,
   BackGroundGradient,
+  DatePickerField,
   FormField,
   SelectBottomSheet,
   UserHeader,
@@ -213,17 +214,15 @@ const PersonalDetailsScreen = () => {
               control={control}
               name="dateOfBirth"
               render={({ field: { onChange, onBlur, value } }) => (
-                <FormField
+                <DatePickerField
                   width="w-full"
                   label="Fecha de nacimiento"
                   value={value}
-                  keyboardType="number-pad"
                   onChangeText={onChange}
                   onBlur={onBlur}
-                  placeholder="DD/MM/YYYY"
+                  placeholder="DD/MM/AAAA"
                   containerClassName="mb-4"
                   error={errors.dateOfBirth?.message}
-                  mask={[/\d/, /\d/, "/", /\d/, /\d/, "/", /\d/, /\d/, /\d/, /\d/]}
                 />
               )}
             />

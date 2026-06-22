@@ -10,6 +10,8 @@ import uuid from "react-native-uuid";
 import { BRICKLE_SOURCE, APP_VERSION_CHECK_URL } from "../utils/constants";
 import { AppVersionInfo } from "../types/app.types";
 import * as ImagePicker from "expo-image-picker";
+import { sanitizeUploadImage } from "../utils/secureUpload";
+import { buildMultipartUploadHeaders } from "./brickleUploadHeaders";
 import { Contact } from "../types/forms";
 import {
   CommitFunds,
@@ -49,7 +51,7 @@ export class BrickleService {
       return response.data;
     } catch (error) {
       if (isAxiosError(error)) {
-        console.log(error.response?.data);
+        if (__DEV__) console.log(error.response?.status);
         const errorMessage =
           error.response?.data?.message ||
           error.response?.data?.error ||
@@ -80,7 +82,7 @@ export class BrickleService {
       return response.data;
     } catch (error) {
       if (isAxiosError(error)) {
-        console.log(error.response?.data);
+        if (__DEV__) console.log(error.response?.status);
         const errorMessage =
           error.response?.data?.message ||
           error.response?.data?.error ||
@@ -98,7 +100,6 @@ export class BrickleService {
 
 export const updateUser = async (userData: BrickleUserUpdateRequest) => {
   try {
-    console.log(userData);
     await brickleClient.put<CreateBrickleUserResponse>(
       `/api/User/${userData.id}`,
       {
@@ -115,10 +116,16 @@ export const updateUser = async (userData: BrickleUserUpdateRequest) => {
     );
   } catch (error) {
     if (isAxiosError(error)) {
-      console.log(error.response?.data);
+      if (__DEV__) console.log(error.response?.status);
+      if (__DEV__ && error.response?.data) {
+        console.log("Brickle updateUser validation error:", error.response.data);
+      }
       const errorMessage =
         error.response?.data?.message ||
         error.response?.data?.error ||
+        (error.response?.data?.errors
+          ? JSON.stringify(error.response.data.errors)
+          : undefined) ||
         error.message ||
         "Unknown Brickle API error";
       throw new Error(`Brickle API Error: ${errorMessage}`);
@@ -151,7 +158,7 @@ export const getInvestmentsGroupedByCategory = async (
     return response.data;
   } catch (error) {
     if (isAxiosError(error)) {
-      console.log(error.response?.data);
+      if (__DEV__) console.log(error.response?.status);
       const errorMessage =
         error.response?.data?.message ||
         error.response?.data?.error ||
@@ -240,18 +247,14 @@ export const uploadUserProfileImage = async (
   try {
     const formData = new FormData();
     formData.append("EntityId", user.id);
-    formData.append("File", {
-      uri: image.uri,
-      name: `User.Profile.${image.mimeType?.split("/")[1] || "jpg"}`,
-      type: image.mimeType || "image/jpeg",
-    } as any);
+    formData.append("File", sanitizeUploadImage(image, "User.Profile") as any);
 
     const response = await brickleClient.post<{ fileUrl: string }>(
       `/api/File`,
       formData,
       {
         headers: {
-          "Content-Type": "multipart/form-data",
+          ...buildMultipartUploadHeaders(),
           correlationId: uuid.v4(),
           user: user.email,
           source: BRICKLE_SOURCE,
@@ -291,18 +294,13 @@ export const uploadIdentityDocument = async (
     const formData = new FormData();
     formData.append("UserId", user.id);
     formData.append("Name", "Identity Document");
-    formData.append("File", {
-      uri: image.uri,
-      name: `User.Identity.${image.mimeType?.split("/")[1] || "jpg"}`,
-      type: image.mimeType || "image/jpeg",
-    } as any);
+    formData.append("File", sanitizeUploadImage(image, "User.Identity") as any);
 
     const response = await brickleClient.post<{ documentUrl: string }>(
       `/api/User/documents`,
       formData,
       {
         headers: {
-          "Content-Type": "multipart/form-data",
           correlationId: uuid.v4(),
           user: user.email,
           source: BRICKLE_SOURCE,
@@ -361,7 +359,7 @@ export const getDiscoverAssets = async (
     return response.data.data;
   } catch (error) {
     if (isAxiosError(error)) {
-      console.log(error.response?.data);
+      if (__DEV__) console.log(error.response?.status);
       const errorMessage =
         error.response?.data?.message ||
         error.response?.data?.error ||
@@ -392,7 +390,6 @@ export const searchUser = async (
         },
       }
     );
-    console.log("response searchUser ==== ", response.data);
     return response.data;
   } catch (error) {
     console.error("Error searching user:", error);
@@ -421,7 +418,7 @@ export const createContact = async (
     return response.data.data;
   } catch (error) {
     if (isAxiosError(error)) {
-      console.log(error.response?.data);
+      if (__DEV__) console.log(error.response?.status);
       const errorMessage =
         error.response?.data?.message ||
         error.response?.data?.error ||
@@ -452,7 +449,7 @@ export const getUserContacts = async (userId: string, email: string) => {
     return response.data;
   } catch (error) {
     if (isAxiosError(error)) {
-      console.log(error.response?.data);
+      if (__DEV__) console.log(error.response?.status);
       const errorMessage =
         error.response?.data?.message ||
         error.response?.data?.error ||

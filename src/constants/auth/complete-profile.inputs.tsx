@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/assets/Colors";
 import { TextInputProps } from "react-native";
-import { Mask } from "react-native-mask-input";
 import { DocumentTypeEnum } from "@/src/types/user.types";
 
 export interface SelectOption {
@@ -13,22 +12,41 @@ interface CompleteProfileInput {
   id: string;
   label: string;
   placeholder: string;
-  type: TextInputProps["keyboardType"] | "select";
+  type: TextInputProps["keyboardType"] | "select" | "date";
   icon: React.ReactNode;
-  mask?: Mask;
   options?: SelectOption[];
 }
 
 export const completeProfileInputs: CompleteProfileInput[] = [
   {
+    id: "firstName",
+    label: "Nombres",
+    placeholder: "Ingresa tus nombres",
+    type: "default",
+    icon: <Ionicons name="person-outline" size={24} color={Colors.textPrimary} />,
+  },
+  {
+    id: "lastName",
+    label: "Apellidos",
+    placeholder: "Ingresa tus apellidos",
+    type: "default",
+    icon: <Ionicons name="person-outline" size={24} color={Colors.textPrimary} />,
+  },
+  {
+    id: "phoneNumber",
+    label: "Número de teléfono",
+    placeholder: "3001234567",
+    type: "phone-pad",
+    icon: <Ionicons name="call-outline" size={24} color={Colors.textPrimary} />,
+  },
+  {
     id: "birthDate",
     label: "Fecha de nacimiento",
-    placeholder: "DD/MM/YYYY",
-    type: "number-pad",
+    placeholder: "DD/MM/AAAA",
+    type: "date",
     icon: (
       <Ionicons name="calendar-outline" size={24} color={Colors.textPrimary} />
     ),
-    mask: [/\d/, /\d/, "/", /\d/, /\d/, "/", /\d/, /\d/, /\d/, /\d/],
   },
   {
     id: "nationality",

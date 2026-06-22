@@ -16,6 +16,7 @@ import { usePinStore } from "@/src/store/pin.store";
 import { validateEnv } from "@/src/utils/env.validator";
 import * as Notifications from 'expo-notifications';
 import { updateUser } from "@/src/services/brickle.service";
+import { restoreSessionFromRefreshToken } from "@/src/services/auth.service";
 import { registerForPushNotificationsAsync } from "@/src/utils/notifications";
 import { notificationsStore } from "@/src/store/notifications.store";
 import { NotificationStatus, NotificationType } from "@/src/types/notifications.types";
@@ -69,16 +70,20 @@ export default function RootLayout() {
   }
 
   useEffect(() => {
-    const prepare = () => {
+    const prepare = async () => {
       const isEnvValid = validateEnv();
       if (!isEnvValid) {
         console.error('❌ Environment validation failed');
         return;
       }
       console.log('✅ Environment validation passed');
+      await restoreSessionFromRefreshToken();
       setAppIsReady(true);
     }
-    prepare();
+    prepare().catch((error) => {
+      console.error("❌ Error preparing app session:", error);
+      setAppIsReady(true);
+    });
 
     // Register session modal handlers
     registerSessionModal(
@@ -203,7 +208,7 @@ export default function RootLayout() {
         <StatusBar barStyle="dark-content" backgroundColor="#E8F5E9" />
         <ErrorBoundary onRestart={() => router.replace('/')}>
           <View style={{ flex: 1, backgroundColor: "#E8F5E9" }} {...panResponder.panHandlers}>
-            <Slot />
+            {appIsReady ? <Slot /> : null}
             <SearchModal />
             <SessionExpiredModal visible={isSessionModalVisible} />
             <AppUpdateModal

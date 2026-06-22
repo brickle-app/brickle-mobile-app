@@ -28,6 +28,14 @@ export function validateEnv() {
       return false;
     }
 
+    if (!__DEV__) {
+      const brickleUrl = new URL(result.data.EXPO_PUBLIC_BRICKLE_API_URL);
+      if (brickleUrl.protocol !== "https:") {
+        console.error("EXPO_PUBLIC_BRICKLE_API_URL must use HTTPS in production");
+        return false;
+      }
+    }
+
     console.log("Environment variables validated successfully");
     return true;
   } catch (error) {

@@ -47,3 +47,4 @@ credentials.json
 credentials/
 android/
 ios/
+.opencode/*

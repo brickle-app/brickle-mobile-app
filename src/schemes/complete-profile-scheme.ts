@@ -1,13 +1,28 @@
 import { z } from "zod";
 import { DocumentTypeEnum } from "../types/user.types";
+import { isAdultDisplayDate } from "../utils/datePicker";
+
+const birthDateValidation = z
+  .string()
+  .min(1, "Fecha de nacimiento es requerida")
+  .refine(
+    (date) => isAdultDisplayDate(date),
+    "Debes seleccionar una fecha válida y ser mayor de 18 años"
+  );
 
 export const step1Schema = z.object({
-  birthDate: z.string().min(1, "Fecha de nacimiento es requerida"),
-  nationality: z.string().min(1, "Nacionalidad es requerida"),
-  residenceCountry: z.string().min(1, "País de residencia es requerido"),
+  firstName: z.string().trim().min(2, "Nombre debe tener al menos 2 caracteres"),
+  lastName: z.string().trim().min(2, "Apellido debe tener al menos 2 caracteres"),
+  phoneNumber: z
+    .string()
+    .trim()
+    .regex(/^3\d{9}$/, "El teléfono debe ser un número móvil colombiano válido"),
+  birthDate: birthDateValidation,
 });
 
 export const step2Schema = z.object({
+  nationality: z.string().min(1, "Nacionalidad es requerida"),
+  residenceCountry: z.string().min(1, "País de residencia es requerido"),
   documentType: z.nativeEnum(DocumentTypeEnum),
   documentNumber: z
     .string()

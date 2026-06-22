@@ -2,18 +2,21 @@ import { useState } from "react";
 import { completeProfileInputs } from "@/src/constants/auth/complete-profile.inputs";
 import {
   CompleteProfileFormData,
-  step1Schema,
-  step2Schema,
   StepSchema,
 } from "@/src/schemes/complete-profile-scheme";
+import { completeProfileSteps } from "./completeProfileSteps";
 import { updateUser } from "@/src/services/brickle.service";
 import { authStore } from "@/src/store/auth.store";
 import { DocumentTypeEnum } from "@/src/types/user.types";
 import { parseDateToISO } from "@/src/utils/date.utility";
 import { router } from "expo-router";
 import { Alert } from "react-native";
+import { buildCompleteProfileUpdate } from "./completeProfileSubmission";
 
 const initialFormData: CompleteProfileFormData = {
+  firstName: "",
+  lastName: "",
+  phoneNumber: "",
   birthDate: "",
   nationality: "",
   residenceCountry: "CO", // Colombia is the only supported residence country
@@ -21,36 +24,28 @@ const initialFormData: CompleteProfileFormData = {
   documentNumber: "",
 };
 
-const steps = [
-  {
-    id: 1,
-    fields: ["birthDate", "nationality", "residenceCountry"],
-    schema: step1Schema, // Use imported schema
-  },
-  {
-    id: 2,
-    fields: ["documentType", "documentNumber"],
-    schema: step2Schema, // Use imported schema
-  },
-];
-
 export function useCompleteProfileForm() {
   const user = authStore((state) => state.user);
   const setUser = authStore((state) => state.setUser);
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] =
-    useState<CompleteProfileFormData>(initialFormData);
+    useState<CompleteProfileFormData>({
+      ...initialFormData,
+      firstName: user?.firstName ?? "",
+      lastName: user?.lastName ?? "",
+      phoneNumber: user?.phoneNumber ?? "",
+    });
   const [errors, setErrors] = useState<
     Partial<Record<keyof CompleteProfileFormData, string>>
   >({});
   const [isLoading, setIsLoading] = useState(false);
 
-  const totalSteps = steps.length;
+  const totalSteps = completeProfileSteps.length;
   const isLastStep = currentStep === totalSteps;
 
-  const currentStepConfig = steps.find((step) => step.id === currentStep);
+  const currentStepConfig = completeProfileSteps.find((step) => step.id === currentStep);
   const currentFields = completeProfileInputs.filter((input) =>
-    currentStepConfig?.fields.includes(input.id)
+    (currentStepConfig?.fields as readonly string[] | undefined)?.includes(input.id)
   );
 
   function handleChange<K extends keyof CompleteProfileFormData>(
@@ -137,33 +132,28 @@ export function useCompleteProfileForm() {
           return;
         }
 
-        // Update user via Brickle service
-        await updateUser({
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          phoneNumber: user.phoneNumber,
-          dateOfBirth: dateOfBirth,
-          nationality: formData.nationality,
-          countryOfResidence: formData.residenceCountry,
-          documentType: formData.documentType,
-          documentNumber: formData.documentNumber,
-          isBasicProfileComplete: true,
-          isProfileUnderReview: true,
-          termsAccepted: true,
-        });
+        // Update user via Brickle service. Review begins only after document upload.
+        await updateUser(
+          buildCompleteProfileUpdate({
+            ...formData,
+            id: user.id,
+            email: user.email,
+          })
+        );
 
         // Update local state to reflect basic profile complete
         setUser({
           ...user,
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
+          phoneNumber: formData.phoneNumber.trim(),
           dateOfBirth: dateForState,
           nationality: formData.nationality,
           countryOfResidence: formData.residenceCountry,
           documentType: formData.documentType,
           documentNumber: formData.documentNumber,
           isBasicProfileComplete: true,
-          isProfileUnderReview: true,
+          isProfileUnderReview: false,
         });
 
         // Navigate back (dashboard/wallet will handle next step)

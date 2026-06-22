@@ -26,6 +26,8 @@ import {
 } from "@/src/utils/leasingInvestorReads";
 import { formatCurrency, parseCopAmountFromText } from "@/src/utils/formatCurrency";
 import { Colors } from "@/assets/Colors";
+import { ProfileDocumentCta } from "@/src/components/dashboard/ProfileDocumentCta";
+import { needsIdentityDocument } from "@/src/utils/profileVerification";
 
 /** Espacio bajo el scroll cuando el anuncio flotante está visible (~altura tarjeta + respiro). */
 const CLAIM_BANNER_SCROLL_PADDING = 100;
@@ -36,10 +38,12 @@ const DashboardScreen = () => {
   const {
     isModalVisible,
     handleBuyPress,
+    handleUploadDocument,
     handleCompleteProfile,
     handleCloseModal,
   } = useDashboard();
   const user = authStore((state) => state.user);
+  const shouldShowDocumentCta = needsIdentityDocument(user);
   const [suggestedAssets, setSuggestedAssets] = useState<Asset[] | null>(null);
   const [isLoadingAssets, setIsLoadingAssets] = useState(true);
   const [isLoadingBalance, setIsLoadingBalance] = useState(true);
@@ -174,6 +178,10 @@ const DashboardScreen = () => {
               onBuyPress={handleFirstPurchasePress}
               snapshotsByInvestmentId={snapshotsByInvestmentId}
             />
+          )}
+
+          {shouldShowDocumentCta && (
+            <ProfileDocumentCta onPress={handleUploadDocument} />
           )}
 
           <SubscriptionBanner

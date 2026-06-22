@@ -7,7 +7,6 @@ import uuid from "react-native-uuid";
 
 import { authStore } from "@/src/store/auth.store";
 import { usePinStore } from "@/src/store/pin.store";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 
 /**
@@ -109,21 +108,6 @@ export const useRegisterForm = () => {
   };
 
   /**
-   * Saves user session data to AsyncStorage
-   */
-  const saveUserSession = async (user: any, token?: string) => {
-    try {
-      await AsyncStorage.setItem("@user_data", JSON.stringify(user));
-      if (token) {
-        await AsyncStorage.setItem("@auth_token", token);
-      }
-      await AsyncStorage.setItem("@is_authenticated", "true");
-    } catch (error) {
-      console.error("Error saving user session:", error);
-    }
-  };
-
-  /**
    * Handles form submission
    * @returns Promise with the registration result or null if failed
    */
@@ -169,7 +153,7 @@ export const useRegisterForm = () => {
         return null;
       }
 
-      // Step 4: Save user session
+      // Step 4: Update in-memory authenticated user
       const userData = {
         ...brickleUser,
       };
@@ -180,9 +164,6 @@ export const useRegisterForm = () => {
       // Update auth store
       setUser(userData);
       setIsAuthenticated(true);
-
-      // Save to AsyncStorage for persistence
-      await saveUserSession(userData);
 
       return {
         user: userData,
