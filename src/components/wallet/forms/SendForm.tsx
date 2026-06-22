@@ -13,7 +13,7 @@ import OperationStatusModal from '@/src/components/wallet/OperationStatusModal';
 type TransactionType = 'bancaria' | 'contacto';
 
 export const SendForm = ({ setIsModalVisible }: { setIsModalVisible: (visible: boolean) => void }) => {
-  const [typeOfTransaction, setTypeOfTransaction] = useState<TransactionType>('contacto');
+  const [typeOfTransaction] = useState<TransactionType>('contacto');
   const [isLoading, setIsLoading] = useState(false);
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);

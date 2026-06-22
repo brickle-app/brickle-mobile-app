@@ -75,7 +75,6 @@ const PersonalDetailsScreen = () => {
     control,
     handleSubmit,
     formState: { errors },
-    watch,
   } = useForm<PersonalDetailsFormData>({
     resolver: zodResolver(personalDetailsSchema),
     defaultValues: {
@@ -90,8 +89,6 @@ const PersonalDetailsScreen = () => {
       documentNumber: user?.documentNumber || "",
     },
   });
-
-  const formValues = watch();
 
   const onSubmit = async (data: PersonalDetailsFormData) => {
     const result = await updatePersonalDetails(data);

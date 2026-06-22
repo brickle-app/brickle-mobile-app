@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Animated, ViewStyle, DimensionValue } from 'react-native';
+import { Animated, ViewStyle, DimensionValue } from 'react-native';
 
 interface SkeletonProps {
   width?: DimensionValue;
@@ -37,7 +37,7 @@ export const Skeleton = ({
     animation.start();
 
     return () => animation.stop();
-  }, []);
+  }, [animatedValue]);
 
   const backgroundColor = animatedValue.interpolate({
     inputRange: [0, 1],

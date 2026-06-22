@@ -16,23 +16,23 @@ export const mockLeasingAsset: LeasingAsset = {
   targetFunding: 80000,
   specifications: [
     {
-      label: "Marca",
+      title: "Marca",
       value: "Caterpillar",
     },
     {
-      label: "Tamaño de paquete",
+      title: "Tamaño de paquete",
       value: "16 gigabytes",
     },
     {
-      label: "RAM",
+      title: "RAM",
       value: "8GB",
     },
     {
-      label: "Capacidad",
+      title: "Capacidad",
       value: "500 GB",
     },
     {
-      label: "Procesador",
+      title: "Procesador",
       value: "Intel Core i7",
     },
   ],
@@ -48,6 +48,7 @@ export const mockLeasingAsset: LeasingAsset = {
       color: "#EB7F58"
     },
     riskPercentage: 8.2,
+    annualRate: 8.2,
     contractPeriod: "36 meses",
     totalReturn: "32.5% anual",
     liquidity: "Media",

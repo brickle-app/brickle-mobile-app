@@ -197,6 +197,13 @@ const WalletScreen = () => {
         onClose={handleCloseModal}
         onCompleteProfile={handleCompleteProfile}
       />
+      <OperationStatusModal
+        isVisible={isOperationStatusModalVisible}
+        onClose={() => setIsOperationStatusModalVisible(false)}
+        title="Operación exitosa"
+        description="Tu solicitud fue procesada correctamente."
+        type="success"
+      />
     </>
   );
 };

@@ -1,5 +1,5 @@
 import React from "react";
-import { Stack, useRouter } from "expo-router";
+import { Href, Stack, useRouter } from "expo-router";
 import { NavigationProvider } from "@/src/context/NavigationContext";
 import { Colors } from "@/assets/Colors";
 
@@ -11,9 +11,9 @@ const StackLayout = () => {
       value={{
         push: (href, params) => {
           if (params && typeof href === "string") {
-            router.push({ pathname: href, params });
+            router.push({ pathname: href, params } as Href);
           } else {
-            router.push(href as import("expo-router").Href);
+            router.push(href as Href);
           }
         },
         back: () => router.back(),

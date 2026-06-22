@@ -50,7 +50,7 @@ export const BottomSheetModal: React.FC<BottomSheetModalProps> = ({
   const slideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
 
   // Animation functions
-  const showModal = () => {
+  const showModal = useCallback(() => {
     Animated.parallel([
       Animated.timing(backdropOpacity, {
         toValue: 1,
@@ -63,9 +63,9 @@ export const BottomSheetModal: React.FC<BottomSheetModalProps> = ({
         useNativeDriver: true,
       }),
     ]).start();
-  };
+  }, [backdropOpacity, slideAnim]);
 
-  const hideModal = () => {
+  const hideModal = useCallback(() => {
     Animated.parallel([
       Animated.timing(backdropOpacity, {
         toValue: 0,
@@ -82,7 +82,7 @@ export const BottomSheetModal: React.FC<BottomSheetModalProps> = ({
       slideAnim.setValue(Dimensions.get('window').height);
       onClose();
     });
-  };
+  }, [backdropOpacity, onClose, slideAnim]);
 
   useEffect(() => {
     if (!visible) {
@@ -117,7 +117,7 @@ export const BottomSheetModal: React.FC<BottomSheetModalProps> = ({
     if (visible) {
       showModal();
     }
-  }, [visible]);
+  }, [visible, showModal]);
 
   const filteredOptions = useMemo(() => {
     if (!searchTerm.trim()) return options;
@@ -146,12 +146,12 @@ export const BottomSheetModal: React.FC<BottomSheetModalProps> = ({
     onSelect(option);
     setSearchTerm("");
     hideModal();
-  }, [onSelect]);
+  }, [hideModal, onSelect]);
 
   const handleClose = useCallback(() => {
     setSearchTerm("");
     hideModal();
-  }, []);
+  }, [hideModal]);
 
   const handleBackdropPress = () => {
     if (isKeyboardVisible) {

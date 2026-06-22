@@ -31,7 +31,7 @@ export async function generatePermit(
     let name;
     try {
       name = await token.name();
-    } catch (nameError) {
+    } catch (_nameError) {
       name = "COP Coin";
     }
 
@@ -43,7 +43,7 @@ export async function generatePermit(
     let nonce;
     try {
       nonce = await token.nonces(userAddress);
-    } catch (nonceError) {
+    } catch (_nonceError) {
       nonce = 0; // Start with nonce 0 as fallback
     }
 

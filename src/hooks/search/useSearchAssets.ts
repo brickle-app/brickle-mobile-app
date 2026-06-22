@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Asset } from "@/src/interfaces/investments.interface";
 import { getDiscoverAssets } from "@/src/services/brickle.service";
 import { authStore } from "@/src/store/auth.store";
@@ -13,7 +13,7 @@ interface UseSearchAssetsReturn {
   searchAssets: (query: string) => Asset[];
 }
 
-export const useSearchAssets = (searchTerm?: string): UseSearchAssetsReturn => {
+export const useSearchAssets = (searchTerm?: string, enabled: boolean = true): UseSearchAssetsReturn => {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +26,7 @@ export const useSearchAssets = (searchTerm?: string): UseSearchAssetsReturn => {
     []
   );
 
-  const fetchAssets = async () => {
+  const fetchAssets = useCallback(async () => {
     if (!user?.email) {
       setError("User email not available");
       return;
@@ -56,7 +56,7 @@ export const useSearchAssets = (searchTerm?: string): UseSearchAssetsReturn => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [categoryNames, user?.email]);
 
   // Filter assets based on search term
   const filteredAssets = useMemo(() => {
@@ -91,16 +91,16 @@ export const useSearchAssets = (searchTerm?: string): UseSearchAssetsReturn => {
   };
 
   // Refetch function for manual refresh
-  const refetch = () => {
+  const refetch = useCallback(() => {
     fetchAssets();
-  };
+  }, [fetchAssets]);
 
   // Fetch assets on mount and when user email changes
   useEffect(() => {
-    if (user?.email) {
+    if (enabled && user?.email) {
       fetchAssets();
     }
-  }, [user?.email]);
+  }, [enabled, fetchAssets, user?.email]);
 
   return {
     assets,

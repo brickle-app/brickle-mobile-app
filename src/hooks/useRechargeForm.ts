@@ -138,7 +138,7 @@ export const useRechargeForm = () => {
       }
 
       setQuote(quote as unknown as Quote);
-    } catch (error) {
+    } catch {
       setSubmitError("Error inesperado. Por favor intente nuevamente.");
       return null;
     } finally {
@@ -187,7 +187,7 @@ export const useRechargeForm = () => {
       setQuote(null);
       setIsLoading(false);
       setOnramp(onramp as unknown as Onramp);
-    } catch (error) {
+    } catch {
       setSubmitError("Error inesperado. Por favor intente nuevamente.");
       return null;
     } finally {

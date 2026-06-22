@@ -1,7 +1,6 @@
-import { View, TouchableOpacity } from "react-native";
+import { View } from "react-native";
 import React from "react";
 import DiscoverIcon from "@/assets/icons/SVG/Buscar.svg";
-import FilterIcon from "@/assets/icons/SVG/Filtro.svg";
 import { Colors } from "@/assets/Colors";
 import { FormField } from "../ui/input";
 
@@ -17,7 +16,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
   value,
   onChangeText,
   placeholder = "Buscar activos...",
-  onFilterPress,
   onInputPress,
 }) => {
   return (

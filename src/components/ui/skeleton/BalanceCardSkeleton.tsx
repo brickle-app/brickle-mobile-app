@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { Skeleton } from './Skeleton';
 import { Card } from '../card/Card';
 

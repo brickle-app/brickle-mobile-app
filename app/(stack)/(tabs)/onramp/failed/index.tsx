@@ -1,13 +1,11 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { View, Text, SafeAreaView, TouchableOpacity } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Button } from "@/src/components";
 
 export default function OnrampFailed() {
   const router = useRouter();
-  const { success } = useLocalSearchParams<{ success: string }>();
-
   const handleRetry = () => {
     router.push("/wallet");
   };

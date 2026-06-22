@@ -5,6 +5,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 import { usePinStore } from "./pin.store";
+import { searchStore } from "./search.store";
 
 const PRIVATE_KEY_STORAGE_KEY = "brickle_private_key";
 const REFRESH_TOKEN_STORAGE_KEY = "brickle_refresh_token";
@@ -170,7 +171,6 @@ export const authStore = create<State>()(
           
           // Clear search store data
           try {
-            const { searchStore } = require('./search.store');
             searchStore.getState().clearAllData();
           } catch (error) {
             console.error("❌ Error clearing search data during logout:", error);

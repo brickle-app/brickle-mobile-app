@@ -35,11 +35,11 @@ export const ASSETS: {
         currentFunding: 12500,
         targetFunding: 62500,
         specifications: [
-          { label: "Marca", value: "Caterpillar" },
-          { label: "Modelo", value: "320D" },
-          { label: "Potencia", value: "140 HP" },
-          { label: "Capacidad", value: "1.2 m³" },
-          { label: "Año", value: "2023" },
+          { title: "Marca", value: "Caterpillar" },
+          { title: "Modelo", value: "320D" },
+          { title: "Potencia", value: "140 HP" },
+          { title: "Capacidad", value: "1.2 m³" },
+          { title: "Año", value: "2023" },
         ],
         company: {
           name: "Construcciones Gamma",
@@ -53,6 +53,7 @@ export const ASSETS: {
             color: "#85FA8F"
           },
           riskPercentage: 4.8,
+          annualRate: 4.8,
           contractPeriod: "36 meses",
           totalReturn: "15.2% anual",
           liquidity: "Alta",
@@ -80,11 +81,11 @@ export const ASSETS: {
         currentFunding: 15000,
         targetFunding: 30000,
         specifications: [
-          { label: "Marca", value: "HP" },
-          { label: "Modelo", value: "EliteDesk 800" },
-          { label: "Procesador", value: "Intel Core i7" },
-          { label: "RAM", value: "16GB DDR4" },
-          { label: "Almacenamiento", value: "512GB SSD" },
+          { title: "Marca", value: "HP" },
+          { title: "Modelo", value: "EliteDesk 800" },
+          { title: "Procesador", value: "Intel Core i7" },
+          { title: "RAM", value: "16GB DDR4" },
+          { title: "Almacenamiento", value: "512GB SSD" },
         ],
         company: {
           name: "TechSpace Solutions",
@@ -98,6 +99,7 @@ export const ASSETS: {
             color: "#85FA8F"
           },
           riskPercentage: 6.8,
+          annualRate: 6.8,
           contractPeriod: "24 meses",
           totalReturn: "20.4% anual",
           liquidity: "Media",
@@ -125,11 +127,11 @@ export const ASSETS: {
         currentFunding: 9000,
         targetFunding: 30000,
         specifications: [
-          { label: "Tipo", value: "Camilla eléctrica" },
-          { label: "Material", value: "Acero inoxidable" },
-          { label: "Capacidad", value: "200 kg" },
-          { label: "Certificación", value: "FDA/CE" },
-          { label: "Garantía", value: "5 años" },
+          { title: "Tipo", value: "Camilla eléctrica" },
+          { title: "Material", value: "Acero inoxidable" },
+          { title: "Capacidad", value: "200 kg" },
+          { title: "Certificación", value: "FDA/CE" },
+          { title: "Garantía", value: "5 años" },
         ],
         company: {
           name: "MedEquip Colombia",
@@ -143,6 +145,7 @@ export const ASSETS: {
             color: "#85FA8F"
           },
           riskPercentage: 7.2,
+          annualRate: 7.2,
           contractPeriod: "48 meses",
           totalReturn: "28.8% anual",
           liquidity: "Media",

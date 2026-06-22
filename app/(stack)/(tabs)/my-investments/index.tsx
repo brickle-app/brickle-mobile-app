@@ -272,6 +272,8 @@ export default function MyInvestments() {
     userInvestment?.leasing?.contractAddress,
     user?.walletAddress,
     userInvestment?.paymentCount,
+    userInvestment,
+    user,
     assetId,
     fetchRentMovements,
   ]);

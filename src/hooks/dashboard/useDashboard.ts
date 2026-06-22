@@ -7,7 +7,6 @@ export function useDashboard() {
   const router = useRouter();
   const user = authStore((state) => state.user);
 
-  const [hasCompletedProfile] = useState(user?.isFullProfileComplete || false);
   const [isModalVisible, setModalVisible] = useState(false);
 
   const handleBuyPress = () => {

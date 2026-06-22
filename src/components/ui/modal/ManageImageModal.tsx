@@ -47,7 +47,7 @@ export const ManageImageModal = ({ visible, onRequestClose, user, setUser }: { v
       const response = await uploadUserProfileImage(user, selectedImage);
       setUser({ ...user, profilePictureUrl: response });
       onRequestClose();
-    } catch (err) {
+    } catch {
       setError("Error al subir la imagen. Por favor, intenta nuevamente.");
     }
   };

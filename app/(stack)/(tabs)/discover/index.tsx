@@ -35,6 +35,10 @@ const DiscoverScreen = () => {
     [router]
   );
 
+  const handleClearCategory = useCallback(() => {
+    handleCategoryPress(null);
+  }, [handleCategoryPress]);
+
   return (
     <SafeAreaView className="flex-1">
       <BackGroundGradient variant="discover" />
@@ -76,6 +80,8 @@ const DiscoverScreen = () => {
             loading={loading}
             errorMessage={errorMessage}
             onAssetPress={handleAssetPress}
+            selectedCategories={selectedCategories}
+            onClearCategory={handleClearCategory}
           />
         )}
       </ScrollView>

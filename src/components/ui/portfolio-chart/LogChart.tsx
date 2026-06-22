@@ -25,19 +25,27 @@ function LogBarChart({
   labelFormatter = defaultFormatter,
   ...rest
 }: Props) {
-  const logB = (v: number) => Math.log(v) / Math.log(base);
-  const values = data.map(d => (d.value <= 0 ? epsilon : d.value));
-  const minPow = Math.floor(Math.min(...values.map(v => logB(v))));
-  const maxPow = Math.ceil(Math.max(...values.map(v => logB(v))));
-  const exponents = Array.from(
-    { length: maxPow - minPow + 1 },
-    (_, i) => i + minPow
-  );
+  const { minPow, exponents } = useMemo(() => {
+    const logB = (v: number) => Math.log(v) / Math.log(base);
+    const values = data.map(d => (d.value <= 0 ? epsilon : d.value));
+    const minPow = Math.floor(Math.min(...values.map(v => logB(v))));
+    const maxPow = Math.ceil(Math.max(...values.map(v => logB(v))));
+    return {
+      minPow,
+      exponents: Array.from(
+        { length: maxPow - minPow + 1 },
+        (_, i) => i + minPow
+      ),
+    };
+  }, [base, data, epsilon]);
 
   const transformed = useMemo(() =>
     data.map(d => ({
       ...d,
-      value: Math.max(0, logB(d.value <= 0 ? epsilon : d.value) - minPow),
+      value: Math.max(
+        0,
+        Math.log(d.value <= 0 ? epsilon : d.value) / Math.log(base) - minPow
+      ),
     })), [data, minPow, epsilon, base]
   );
 

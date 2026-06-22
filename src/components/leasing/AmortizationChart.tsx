@@ -52,7 +52,10 @@ export const AmortizationChart = ({ asset, theme }: AmortizationChartProps) => {
     fetchAmortization();
   }, [asset.id, user?.email]);
 
-  const amortizationData = amortizationTable?.periods || [];
+  const amortizationData = useMemo(
+    () => amortizationTable?.periods || [],
+    [amortizationTable?.periods]
+  );
 
   const totalInstallment = amortizationTable?.totalInstallment || 0;
 

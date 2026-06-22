@@ -1,6 +1,5 @@
 import { updateUser } from "@/src/services/brickle.service";
 import { authStore } from "@/src/store/auth.store";
-import { DocumentTypeEnum } from "@/src/types/user.types";
 import { PersonalDetailsFormData } from "@/src/schemes/personal-details-scheme";
 import { formatDateForAPI, parseDateToISO } from "@/src/utils/date.utility";
 import { toBrickleUserUpdatePayload } from "@/src/utils/brickle-user-payload";

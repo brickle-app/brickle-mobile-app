@@ -64,7 +64,14 @@ export const usePortfolio = () => {
     } else {
       setIsLoading(false);
     }
-  }, [user?.email, user?.id]);
+  }, [
+    setCurrentValue,
+    setRoi,
+    setTotalInvested,
+    setTotalReturn,
+    user?.email,
+    user?.id,
+  ]);
 
   useEffect(() => {
     fetchPortfolio();

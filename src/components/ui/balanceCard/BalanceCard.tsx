@@ -26,7 +26,7 @@ export const BalanceCard = ({ title, balance, walletAddress }: BalanceCardProps)
       await Clipboard.setStringAsync(walletAddress);
       setShowCopyFeedback(true);
       setTimeout(() => setShowCopyFeedback(false), 2000);
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'No se pudo copiar la dirección');
     }
   };

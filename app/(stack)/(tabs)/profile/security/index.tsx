@@ -1,5 +1,5 @@
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
-import React, { useState } from "react";
+import React from "react";
 import { router } from "expo-router";
 import BackGroundGradient from "@/src/components/ui/backgroundGradient/BackGroundGradient";
 import { UserHeader } from "@/src/components/user";
@@ -50,12 +50,7 @@ const SecurityOption = ({
 };
 
 const SecurityScreen = () => {
-  // State for toggles
   const user = authStore((state) => state.user);
-  const [isEmailNotificationEnabled, setIsEmailNotificationEnabled] =
-    useState(true);
-
-  // Handlers
 
   return (
     <View className="flex-1">

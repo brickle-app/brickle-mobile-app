@@ -3,7 +3,6 @@ import { Modal, View, Text, TouchableOpacity, SafeAreaView, Alert, KeyboardAvoid
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/assets/Colors';
 import { FormField, SelectBottomSheet } from '@/src/components/ui/input';
-import { Button } from '@/src/components/ui/button/Button';
 import { UserAccount } from '@/src/types/user-account';
 import { authStore } from '@/src/store/auth.store';
 import useChangeStatusBarColor from '@/src/hooks/ui/useChangeStatusBarColor';

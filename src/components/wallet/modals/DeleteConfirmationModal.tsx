@@ -2,7 +2,6 @@ import React from 'react';
 import { Modal, View, Text, TouchableOpacity, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/assets/Colors';
-import { Button } from '@/src/components/ui/button/Button';
 import useChangeStatusBarColor from '@/src/hooks/ui/useChangeStatusBarColor';
 
 interface DeleteConfirmationModalProps {

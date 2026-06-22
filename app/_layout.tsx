@@ -91,7 +91,7 @@ export default function RootLayout() {
       () => setIsSessionModalVisible(false),
       router
     );
-  }, [])
+  }, [router])
 
   useEffect(() => {
     registerForPushNotificationsAsync()
@@ -131,7 +131,7 @@ export default function RootLayout() {
       notificationListener.remove();
       responseListener.remove();
     };
-  }, [])
+  }, [addNotification, user])
 
   // Redirect after Slot has mounted; never navigate before the root layout is ready
   useEffect(() => {
@@ -151,6 +151,21 @@ export default function RootLayout() {
         path.includes("verify-otp") ||
         path.includes("redirect-handler");
 
+      const isPinRoute = path.includes("pin-setup") || path.includes("pin-lock");
+      const isAuthenticatedRoute =
+        path.includes("(tabs)") ||
+        path.includes("dashboard") ||
+        path.includes("wallet") ||
+        path.includes("portfolio") ||
+        path.includes("discover") ||
+        path.includes("notifications") ||
+        path.includes("onramp") ||
+        path.includes("profile") ||
+        path.includes("asset-detail") ||
+        path.includes("leasing") ||
+        path.includes("support") ||
+        path.includes("webview");
+
       if (!hasPin) {
         if (!postponePinSetup && !path.includes("pin-setup")) {
           router.replace("/(stack)/pin-setup");
@@ -160,8 +175,14 @@ export default function RootLayout() {
       }
 
       if (hasPin && isLocked) {
-        router.replace("/(stack)/pin-lock");
-        console.log("✅ Redirecting to pin-lock");
+        if (!path.includes("pin-lock")) {
+          router.replace("/(stack)/pin-lock");
+          console.log("✅ Redirecting to pin-lock");
+        }
+        return;
+      }
+
+      if (isAuthenticatedRoute && !isPinRoute) {
         return;
       }
 
@@ -169,7 +190,7 @@ export default function RootLayout() {
       console.log("✅ Redirecting to dashboard");
     }, 0);
     return () => clearTimeout(timeoutId);
-  }, [appIsReady, user, hasPin, isLocked]);
+  }, [appIsReady, user, hasPin, isLocked, pathname, router]);
 
   useEffect(() => {
     if (isAuthenticated && user) {

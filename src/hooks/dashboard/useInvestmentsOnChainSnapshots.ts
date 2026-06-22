@@ -6,12 +6,6 @@ import {
   loadInvestorOnChainSnapshot,
 } from "@/src/utils/leasingInvestorReads";
 
-function investmentsSnapshotKey(list: Investment[]): string {
-  return list
-    .map((i) => `${i.id}:${i.leasingId}:${i.leasing?.contractAddress ?? ""}`)
-    .join("|");
-}
-
 export function useInvestmentsOnChainSnapshots(
   investments: Investment[],
   user: PartialBrickleUser | null | undefined
@@ -20,8 +14,6 @@ export function useInvestmentsOnChainSnapshots(
     Record<string, InvestorOnChainSnapshot>
   >({});
   const [isLoadingSnapshots, setIsLoadingSnapshots] = useState(false);
-
-  const key = investmentsSnapshotKey(investments);
 
   const loadSnapshots = useCallback(async () => {
     if (!user || investments.length === 0) {
@@ -51,7 +43,7 @@ export function useInvestmentsOnChainSnapshots(
     } finally {
       setIsLoadingSnapshots(false);
     }
-  }, [user, investments, key]);
+  }, [user, investments]);
 
   useEffect(() => {
     void loadSnapshots();

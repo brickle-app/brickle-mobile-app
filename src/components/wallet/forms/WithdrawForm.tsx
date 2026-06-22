@@ -6,7 +6,7 @@ import TarjetaIcon from '@/assets/icons/SVG/Tarjeta.svg';
 import { FormField, SelectBottomSheet } from '@/src/components/ui/input';
 import { AddAccountModal } from '@/src/components/wallet/modals/AddAccountModal';
 import { DeleteConfirmationModal } from '@/src/components/wallet/modals/DeleteConfirmationModal';
-import { UserAccount, GetUserAccounts } from '@/src/types/user-account';
+import { GetUserAccounts } from '@/src/types/user-account';
 import { getAllBankAccounts, deleteBankAccount } from '@/src/services/account.service';
 import { authStore } from '@/src/store/auth.store';
 import { useBlockchainConfigStore } from '@/src/store/blockchainConfig.store';
@@ -15,7 +15,6 @@ import { formatColombianPesos, parseCopAmountFromText } from '@/src/utils/format
 import { Alert } from 'react-native';
 import { withdrawAccount } from '@/src/services/finance.service';
 import { getPrivateKey } from '@/src/services/auth.service';
-import { CreateRechargeDto } from '@/src/types/finance.types';
 
 import { LeasingTokenService } from '@/src/components/wallet/contracts/services/leasing-token.service';
 
@@ -26,7 +25,6 @@ export const WithdrawForm = ({ setIsModalVisible }: { setIsModalVisible: (visibl
   const [amount, setAmount] = useState('');
   const [bankAccount, setBankAccount] = useState('');
   const [isAddAccountModalVisible, setIsAddAccountModalVisible] = useState(false);
-  const [userAccounts, setUserAccounts] = useState<UserAccount[]>([]);
   const [bankAccounts, setBankAccounts] = useState<GetUserAccounts[]>([]);
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(true);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
@@ -41,9 +39,32 @@ export const WithdrawForm = ({ setIsModalVisible }: { setIsModalVisible: (visibl
 
   const { user, balance } = authStore();
 
+  const fetchBankAccounts = useCallback(async () => {
+    if (!user?.email || !user?.id) {
+      console.log('User not available for fetching accounts');
+      setIsLoadingAccounts(false);
+      return;
+    }
+
+    try {
+      setIsLoadingAccounts(true);
+      const accounts = await getAllBankAccounts(user.email, user.id);
+      if (accounts) {
+        setBankAccounts(Array.isArray(accounts) ? accounts : [accounts]);
+      } else {
+        setBankAccounts([]);
+      }
+    } catch (error) {
+      console.error('Error fetching bank accounts:', error);
+      setBankAccounts([]);
+    } finally {
+      setIsLoadingAccounts(false);
+    }
+  }, [user?.email, user?.id]);
+
   useEffect(() => {
     fetchBankAccounts();
-  }, [user]);
+  }, [fetchBankAccounts]);
 
   const validateAmount = (amountValue: string): string | null => {
     const digits = String(amountValue ?? "").replace(/\D/g, "");
@@ -198,34 +219,10 @@ export const WithdrawForm = ({ setIsModalVisible }: { setIsModalVisible: (visibl
     setIsAddAccountModalVisible(true);
   };
 
-  const handleAccountAdded = (account: UserAccount) => {
-    setUserAccounts(prev => [...prev, account]);
+  const handleAccountAdded = () => {
     setIsOperationStatusModalVisible(true);
     // Refresh bank accounts after adding new one
     fetchBankAccounts();
-  };
-
-  const fetchBankAccounts = async () => {
-    if (!user?.email || !user?.id) {
-      console.log('User not available for fetching accounts');
-      setIsLoadingAccounts(false);
-      return;
-    }
-
-    try {
-      setIsLoadingAccounts(true);
-      const accounts = await getAllBankAccounts(user.email, user.id);
-      if (accounts) {
-        setBankAccounts(Array.isArray(accounts) ? accounts : [accounts]);
-      } else {
-        setBankAccounts([]);
-      }
-    } catch (error) {
-      console.error('Error fetching bank accounts:', error);
-      setBankAccounts([]);
-    } finally {
-      setIsLoadingAccounts(false);
-    }
   };
 
   const handleDeleteAccountPress = (account: GetUserAccounts) => {
@@ -267,7 +264,7 @@ export const WithdrawForm = ({ setIsModalVisible }: { setIsModalVisible: (visibl
   const selectedBankAccount = useCallback(() => {
     const account = bankAccounts?.find((account) => account.id === bankAccount)
     return account;
-  }, [bankAccount])
+  }, [bankAccount, bankAccounts])
 
   return (
     <Card className="mb-6 p-4" style={{ backgroundColor: 'transparent' }}>

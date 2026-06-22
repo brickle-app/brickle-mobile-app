@@ -1,4 +1,4 @@
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import React, { useState } from "react";
 import BackGroundGradient from "@/src/components/ui/backgroundGradient/BackGroundGradient";
 import { FormField } from "@/src/components/ui/input";

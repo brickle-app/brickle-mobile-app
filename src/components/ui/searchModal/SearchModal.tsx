@@ -24,7 +24,7 @@ export const SearchModal: React.FC = () => {
   const slideAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
-  const { assets, filteredAssets, isLoading, error, refetch } = useSearchAssets(searchTerm);
+  const { assets, filteredAssets, isLoading, error, refetch } = useSearchAssets(searchTerm, isModalVisible);
 
   useEffect(() => {
     if (isModalVisible) {
@@ -46,7 +46,7 @@ export const SearchModal: React.FC = () => {
       slideAnim.setValue(0);
       opacityAnim.setValue(0);
     }
-  }, [isModalVisible]);
+  }, [isModalVisible, opacityAnim, slideAnim]);
 
   const handleClose = () => {
     Animated.parallel([

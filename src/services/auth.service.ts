@@ -5,7 +5,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import { Platform } from "react-native";
 import { authStore } from "../store/auth.store";
-import { isAxiosError } from "axios";
 import { startInactivityTimer, startTokenExpirationMonitoring } from "../utils/sessionManager";
 import * as SecureStore from "expo-secure-store";
 import { ethers } from "ethers";
@@ -148,7 +147,7 @@ export const useGoogleAuth = () => {
   const [showAuthError, setShowAuthError] = useState(false);
   const [isAwaitingGoogleToken, setIsAwaitingGoogleToken] = useState(false);
 
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest(
+  const [, response, promptAsync] = Google.useIdTokenAuthRequest(
     buildGoogleAuthRequestConfig()
   );
 

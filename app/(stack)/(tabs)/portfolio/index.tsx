@@ -62,7 +62,7 @@ const PortfolioScreen = () => {
   const currentValue = authStore((state) => state.currentValue);
   const totalInvested = authStore((state) => state.totalInvested);
   const roi = authStore((state) => state.roi);
-  const { chartData, isLoading: isLoadingChart, refetch: refetchPortfolio } = usePortfolio();
+  const { chartData, refetch: refetchPortfolio } = usePortfolio();
   const { claimableInvestments, isLoading: isLoadingClaimable } = useClaimableRentInvestments(
     investments,
     portfolioEvmAddress
@@ -110,8 +110,10 @@ const PortfolioScreen = () => {
   }, [currentValue, roi, totalInvested, fetchProjections, getDefaultStartDate]);
 
   const handleRefresh = async () => {
-    await refetchPortfolio();
-    await refetchInvestments();
+    await Promise.all([
+      refetchPortfolio(),
+      refetchInvestments(),
+    ]);
     await refetchSnapshots();
     await fetchProjections({
       currentValue: currentValue,
@@ -127,8 +129,10 @@ const PortfolioScreen = () => {
   });
 
   const onGlobalRefresh = useCallback(async () => {
-    await refetchPortfolio();
-    await refetchInvestments();
+    await Promise.all([
+      refetchPortfolio(),
+      refetchInvestments(),
+    ]);
     await refetchSnapshots();
     const { currentValue: cv, roi: r, totalInvested: ti } = authStore.getState();
     if (cv && cv > 0) {
@@ -197,7 +201,7 @@ const PortfolioScreen = () => {
         )}
 
         <Text className="text-2xl font-libre-bold mb-4">Portafolio</Text>
-        {isLoadingChart ? (
+        {currentValue == null ? (
           <PortfolioChartSkeleton />
         ) : (
           <SwitchablePortfolioChart

@@ -1,4 +1,4 @@
-import { Asset, Investment } from "@/src/interfaces/investments.interface";
+import { Investment } from "@/src/interfaces/investments.interface";
 import { getInvestmentsByUserId } from "@/src/services/brickle.service";
 import { authStore } from "@/src/store/auth.store";
 import { useEffect, useState, useCallback } from "react";

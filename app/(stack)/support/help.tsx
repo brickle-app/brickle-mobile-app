@@ -1,6 +1,5 @@
 import { View, Text, TouchableOpacity, TextInput, ScrollView, Linking } from "react-native";
 import React, { useState } from "react";
-import { Link } from "expo-router";
 import BackGroundGradient from "@/src/components/ui/backgroundGradient/BackGroundGradient";
 
 const HelpCenterScreen = () => {

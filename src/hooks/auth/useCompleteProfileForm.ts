@@ -111,7 +111,7 @@ export function useCompleteProfileForm() {
       try {
         console.log("Saving user profile to Brickle backend...");
 
-        if (!user) {
+        if (!user?.id || !user.email) {
           throw new Error("User not found via authStore");
         }
 

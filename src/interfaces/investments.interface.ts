@@ -147,11 +147,6 @@ interface ChartData {
   invested: number;
   return: number;
 }
-interface PortfolioData {
-  month: string;
-  projectedValue: number;
-}
-
 export interface AmortizationPeriod {
   month: number;
   monthLabel: string;

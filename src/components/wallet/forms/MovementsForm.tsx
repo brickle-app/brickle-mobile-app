@@ -178,7 +178,7 @@ export const MovementsForm = () => {
                         );
                         setTransactions(mappedTransactions);
                       }
-                    } catch (error) {
+                    } catch {
                       setError("Error al cargar las transacciones");
                     } finally {
                       setLoading(false);

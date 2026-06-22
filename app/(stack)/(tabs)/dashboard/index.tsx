@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 import { ScrollView, Text, View, RefreshControl, Pressable, Platform, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { DashboardHeader } from "@/src/components/dashboard/dashboard-header/DashboardHeader";
@@ -81,7 +81,7 @@ const DashboardScreen = () => {
   }, [claimableInvestments]);
   const { chartData: portfolioChartData, isLoading: isLoadingPortfolio, refetch: refetchPortfolio } = usePortfolio();
 
-  const fetchSuggestedAssets = async () => {
+  const fetchSuggestedAssets = useCallback(async () => {
     if (user?.email) {
       setIsLoadingAssets(true);
       try {
@@ -95,9 +95,9 @@ const DashboardScreen = () => {
     } else {
       setIsLoadingAssets(false);
     }
-  };
+  }, [user?.email]);
 
-  const fetchBalance = async () => {
+  const fetchBalance = useCallback(async () => {
     setIsLoadingBalance(true);
     try {
       await refreshBalance();
@@ -107,9 +107,9 @@ const DashboardScreen = () => {
     } finally {
       setIsLoadingBalance(false);
     }
-  };
+  }, [refreshBalance]);
 
-  const fetchAllData = async () => {
+  const fetchAllData = useCallback(async () => {
     await Promise.all([
       fetchSuggestedAssets(),
       fetchBalance(),
@@ -117,7 +117,20 @@ const DashboardScreen = () => {
       refetchInvestments(),
       refetchSnapshots(),
     ]);
-  };
+  }, [
+    fetchBalance,
+    fetchSuggestedAssets,
+    refetchInvestments,
+    refetchPortfolio,
+    refetchSnapshots,
+  ]);
+
+  const fetchInitialDashboardData = useCallback(async () => {
+    await Promise.all([
+      fetchSuggestedAssets(),
+      fetchBalance(),
+    ]);
+  }, [fetchBalance, fetchSuggestedAssets]);
 
   const handleAssetPress = (asset: Asset) => {
     router.push(`/(stack)/asset-detail/${asset.id}?source=dashboard` as import("expo-router").Href);
@@ -142,8 +155,8 @@ const DashboardScreen = () => {
   });
 
   useEffect(() => {
-    void fetchAllData();
-  }, [user]);
+    void fetchInitialDashboardData();
+  }, [fetchInitialDashboardData]);
 
   useOnRefreshTriggerIncrement(() => {
     void fetchAllData();

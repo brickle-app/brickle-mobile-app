@@ -1,13 +1,13 @@
-import React, { cloneElement } from "react";
+import React from "react";
 import { Text, View } from "react-native";
 import InfoIcon from "@/assets/icons/SVG/Info.svg";
 import { Colors } from "@/assets/Colors";
 import { mockCategories } from "@/src/data/mock-categories";
 import { Asset } from "@/src/interfaces/investments.interface";
-import { getCategory, getCategoryBgColor, getCategoryChipTextColor } from "@/src/utils/categories";
 import { DiscoverAssetCardList } from "./DiscoverAssetCardList";
 import { groupAssetsByCategory, normalizeCategory } from "./discoverScreen.logic";
 import TrendingCarousel from "./TrendingCarousel";
+import { DiscoveryCategoryChip } from "./DiscoveryCategoryChip";
 
 interface DiscoverTrendingSectionProps {
   topAssets: Asset[];
@@ -54,23 +54,11 @@ export const DiscoverTrendingSection = ({
 };
 
 const CategoryHeader = ({ category }: { category: string }) => {
-  const bgColor = getCategoryBgColor(category);
-  const textColor = getCategoryChipTextColor(category);
   const mockCat = mockCategories.find((m) => normalizeCategory(m.name) === category);
-  const icon = getCategory(category)?.icon;
 
   return (
     <View className="flex-row items-center mx-4 mb-3">
-      {mockCat?.icon ?? (
-        <View className="size-8 items-center justify-center rounded-full mr-2" style={{ backgroundColor: bgColor }}>
-          {icon && React.isValidElement(icon)
-            ? cloneElement(icon as React.ReactElement<{ width?: number; height?: number }>, { width: 18, height: 18 })
-            : null}
-        </View>
-      )}
-      <View className="rounded-full px-3 py-1" style={{ backgroundColor: bgColor }}>
-        <Text className="text-sm font-libre-bold" style={{ color: textColor }}>{category}</Text>
-      </View>
+      {mockCat ? <DiscoveryCategoryChip category={mockCat} /> : null}
     </View>
   );
 };

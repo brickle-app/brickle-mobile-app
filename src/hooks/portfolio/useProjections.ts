@@ -2,7 +2,6 @@ import { useState, useCallback, useMemo } from "react";
 import { authStore } from "@/src/store/auth.store";
 import { getPortfolioProjectionByUserId } from "@/src/services/brickle.service";
 import {
-  PortfolioChartDto,
   ProjectionPointDto,
 } from "@/src/interfaces/investments.interface";
 

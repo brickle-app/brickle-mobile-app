@@ -280,7 +280,7 @@ const ResultTransition: React.FC<{ children: React.ReactNode }> = ({ children })
   React.useEffect(() => {
     opacity.value = withTiming(1, { duration: 320 });
     translateY.value = withTiming(0, { duration: 320 });
-  }, []);
+  }, [opacity, translateY]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
