@@ -421,11 +421,16 @@ export const refreshToken = async (): Promise<{ success: boolean; newToken?: str
       return { success: false };
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
     const res = await fetch(`${BRICKLE_API_URL}/api/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken: refreshTokenValue }),
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
     if (!res.ok) {
       // Clear stale refresh token so we don't keep retrying

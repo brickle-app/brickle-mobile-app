@@ -88,19 +88,22 @@ export default function RootLayout() {
 
   useEffect(() => {
     const prepare = async () => {
-      const isEnvValid = validateEnv();
-      if (!isEnvValid) {
-        console.error('❌ Environment validation failed');
-        return;
+      try {
+        const isEnvValid = validateEnv();
+        if (!isEnvValid) {
+          console.error('❌ Environment validation failed');
+          return; // Still set appIsReady so app doesn't hang
+        }
+        console.log('✅ Environment validation passed');
+        await restoreSessionFromRefreshToken();
+      } catch (error) {
+        console.error("❌ Error preparing app session:", error);
+      } finally {
+        // ALWAYS set appIsReady so the app doesn't hang on splash screen
+        setAppIsReady(true);
       }
-      console.log('✅ Environment validation passed');
-      await restoreSessionFromRefreshToken();
-      setAppIsReady(true);
     }
-    prepare().catch((error) => {
-      console.error("❌ Error preparing app session:", error);
-      setAppIsReady(true);
-    });
+    prepare();
 
     // Register session modal handlers
     registerSessionModal(
