@@ -4,23 +4,19 @@ import { updateUserActivity, stopInactivityTimer, startInactivityTimer } from '@
 import { authStore } from '@/src/store/auth.store';
 import { BrickleService } from '../services/brickle.service';
 import { usePinStore } from '../store/pin.store';
-import { router } from 'expo-router';
 
 export const useSessionActivity = () => {
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       const { isAuthenticated } = authStore.getState();
-      const { hasPin, lock, isLocked } = usePinStore.getState();
+      const { hasPin, lock } = usePinStore.getState();
 
       if (nextAppState === 'active') {
         startInactivityTimer();
         updateUserActivity();
 
-        // On foreground return: if PIN is required and locked, navigate to pin-lock
-        // _layout.tsx handles cold-start navigation — we only handle background→foreground
-        if (isAuthenticated && hasPin && isLocked) {
-          (router as any).push("/(stack)/pin-lock");
-        }
+        // _layout.tsx is the single owner of auth/PIN navigation.
+        // This hook only updates lock/activity state to avoid startup route races.
 
         const { userEmail, setUser } = authStore.getState();
         if (userEmail) {

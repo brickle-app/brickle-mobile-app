@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { Slot, useRouter, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import "./global.css";
@@ -21,6 +21,7 @@ import { registerForPushNotificationsAsync } from "@/src/utils/notifications";
 import { notificationsStore } from "@/src/store/notifications.store";
 import { NotificationStatus, NotificationType } from "@/src/types/notifications.types";
 import { useSessionActivity } from "@/src/hooks/useSessionActivity";
+import { getStartupRedirectPath } from "@/src/navigation/startupRedirect";
 
 // Configure splash screen options
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -47,8 +48,6 @@ export default function RootLayout() {
   // const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
   // const { updateAvailable, latestVersion, openStore, checked } = useAppUpdate();
   const { addNotification } = notificationsStore();
-  const pathnameRef = useRef(pathname);
-  pathnameRef.current = pathname;
 
   // Initialize session activity tracking (handles PIN lock on background)
   useSessionActivity();
@@ -104,7 +103,9 @@ export default function RootLayout() {
       }
     }
     prepare();
+  }, [])
 
+  useEffect(() => {
     // Register session modal handlers
     registerSessionModal(
       () => setIsSessionModalVisible(true),
@@ -157,60 +158,19 @@ export default function RootLayout() {
   useEffect(() => {
     if (!appIsReady) return;
     onLayoutRootView();
-    const path = pathnameRef.current ?? "";
     const timeoutId = setTimeout(() => {
-      if (!user) {
-        router.replace("/(stack)/(auth)/login");
-        console.log("✅ Redirecting to login");
-        return;
-      }
+      const redirectPath = getStartupRedirectPath({
+        appIsReady,
+        hasUser: Boolean(user),
+        hasPin,
+        isLocked,
+        pathname,
+      });
 
-      const postponePinSetup =
-        path.includes("register") ||
-        path.includes("complete-profile") ||
-        path.includes("verify-otp") ||
-        path.includes("redirect-handler");
-
-      const isPinRoute = path.includes("pin-setup") || path.includes("pin-lock");
-      const isAuthenticatedRoute =
-        path.includes("(tabs)") ||
-        path.includes("dashboard") ||
-        path.includes("wallet") ||
-        path.includes("portfolio") ||
-        path.includes("discover") ||
-        path.includes("notifications") ||
-        path.includes("onramp") ||
-        path.includes("profile") ||
-        path.includes("asset-detail") ||
-        path.includes("leasing") ||
-        path.includes("support") ||
-        path.includes("webview");
-
-      if (!hasPin) {
-        if (!postponePinSetup && !path.includes("pin-setup")) {
-          router.replace("/(stack)/pin-setup");
-          console.log("✅ Redirecting to pin-setup (PIN obligatorio)");
-        }
-        return;
-      }
-
-      if (hasPin && isLocked) {
-        if (!path.includes("pin-lock")) {
-          router.replace("/(stack)/pin-lock");
-          console.log("✅ Redirecting to pin-lock");
-        }
-        return;
-      }
-
-      if (isAuthenticatedRoute && !isPinRoute) {
-        return;
-      }
-
-      router.replace("/(stack)/(tabs)/dashboard");
-      console.log("✅ Redirecting to dashboard");
+      if (redirectPath) router.replace(redirectPath as any);
     }, 0);
     return () => clearTimeout(timeoutId);
-  }, [appIsReady, user, hasPin, isLocked, router]);
+  }, [appIsReady, user, hasPin, isLocked, pathname, router]);
 
   useEffect(() => {
     if (isAuthenticated && user) {
