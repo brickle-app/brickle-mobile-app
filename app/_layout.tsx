@@ -51,6 +51,21 @@ export default function RootLayout() {
   // Initialize session activity tracking (handles PIN lock on background)
   useSessionActivity();
 
+  // Global error handler — prevent unhandled promise rejections from crashing the app
+  useEffect(() => {
+    const handleError = (event: { message?: string }) => {
+      if (__DEV__) console.warn("Global error:", event?.message);
+    };
+    const handleRejection = (event: { reason?: unknown }) => {
+      if (__DEV__) console.warn("Unhandled promise rejection:", event?.reason);
+    };
+    (globalThis as any).ErrorUtils?.setGlobalHandler?.(handleError);
+    const subscription = (globalThis as any).addEventListener?.("unhandledrejection", handleRejection);
+    return () => {
+      if (subscription?.remove) subscription.remove();
+    };
+  }, []);
+
   // Create PanResponder to detect user interactions
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => {
@@ -97,11 +112,11 @@ export default function RootLayout() {
     registerForPushNotificationsAsync()
       .then(token => {
         console.log('Expo Push Token:', token);
-        if (user?.pushNotificationToken !== token) {
+        if (user?.id && user?.pushNotificationToken !== token) {
           updateUser({
             ...user,
             pushNotificationToken: token,
-          });
+          }).catch((err) => console.warn('Failed to update push token:', err));
         }
 
       })

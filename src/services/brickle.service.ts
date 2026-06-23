@@ -99,6 +99,10 @@ export class BrickleService {
 }
 
 export const updateUser = async (userData: BrickleUserUpdateRequest) => {
+  if (!userData.id) {
+    console.warn("updateUser called with undefined id, skipping");
+    return;
+  }
   try {
     await brickleClient.put<CreateBrickleUserResponse>(
       `/api/User/${userData.id}`,
@@ -512,6 +516,7 @@ export const getPortfolioByUserId = async (
     const response = await brickleClient.get<PortfolioChartDto>(
       `/api/Portfolio/overview?userId=${userId}&from=${from}&to=${to}${extraQuery ? `&${extraQuery}` : ""}`,
       {
+        timeout: 30000,
         headers: {
           correlationId: uuid.v4(),
           user: email,
