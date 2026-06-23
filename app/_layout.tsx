@@ -4,8 +4,8 @@ import * as SplashScreen from "expo-splash-screen";
 import "./global.css";
 import { StatusBar, View, PanResponder } from "react-native";
 import { SearchModal } from "@/src/components/ui/searchModal/SearchModal";
-import { SessionExpiredModal, AppUpdateModal } from "@/src/components/modals";
-import { useAppUpdate } from "@/src/hooks/useAppUpdate";
+import { SessionExpiredModal } from "@/src/components/modals";
+// import { useAppUpdate } from "@/src/hooks/useAppUpdate"; // Disabled: checkAppVersion 404 breaks prod init
 import { ErrorBoundary } from "@/src/components/ErrorBoundary";
 import { registerSessionModal, updateUserActivity, startInactivityTimer, stopInactivityTimer, startTokenExpirationMonitoring, stopTokenExpirationMonitoring } from "@/src/utils/sessionManager";
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -44,8 +44,8 @@ export default function RootLayout() {
   const pathname = usePathname();
   const [appIsReady, setAppIsReady] = useState(false);
   const [isSessionModalVisible, setIsSessionModalVisible] = useState(false);
-  const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
-  const { updateAvailable, latestVersion, openStore, checked } = useAppUpdate();
+  // const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
+  // const { updateAvailable, latestVersion, openStore, checked } = useAppUpdate();
   const { addNotification } = notificationsStore();
   const pathnameRef = useRef(pathname);
   pathnameRef.current = pathname;
@@ -225,20 +225,20 @@ export default function RootLayout() {
     };
   }, [isAuthenticated, user]);
 
-  useEffect(() => {
-    if (checked && updateAvailable) {
-      setIsUpdateModalVisible(true);
-    }
-  }, [checked, updateAvailable]);
+  // useEffect(() => {
+  //   if (checked && updateAvailable) {
+  //     setIsUpdateModalVisible(true);
+  //   }
+  // }, [checked, updateAvailable]);
 
-  const handleUpdate = () => {
-    setIsUpdateModalVisible(false);
-    openStore();
-  };
+  // const handleUpdate = () => {
+  //   setIsUpdateModalVisible(false);
+  //   openStore();
+  // };
 
-  const handleUpdateLater = () => {
-    setIsUpdateModalVisible(false);
-  };
+  // const handleUpdateLater = () => {
+  //   setIsUpdateModalVisible(false);
+  // };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -249,12 +249,12 @@ export default function RootLayout() {
             {appIsReady ? <Slot /> : null}
             <SearchModal />
             <SessionExpiredModal visible={isSessionModalVisible} />
-            <AppUpdateModal
+            {/* <AppUpdateModal
               visible={isUpdateModalVisible}
               latestVersion={latestVersion}
               onUpdate={handleUpdate}
               onLater={handleUpdateLater}
-            />
+            /> */}
           </View>
         </ErrorBoundary>
       </SafeAreaProvider>
