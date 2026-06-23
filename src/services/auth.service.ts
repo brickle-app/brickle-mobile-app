@@ -427,7 +427,11 @@ export const refreshToken = async (): Promise<{ success: boolean; newToken?: str
       body: JSON.stringify({ refreshToken: refreshTokenValue }),
     });
 
-    if (!res.ok) return { success: false };
+    if (!res.ok) {
+      // Clear stale refresh token so we don't keep retrying
+      await SecureStore.deleteItemAsync(REFRESH_TOKEN_STORAGE_KEY);
+      return { success: false };
+    }
 
     const data: AuthResponse = await res.json();
 

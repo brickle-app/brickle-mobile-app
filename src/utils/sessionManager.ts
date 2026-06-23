@@ -158,8 +158,8 @@ export const startTokenExpirationMonitoring = () => {
   tokenExpirationManager.isActive = true;
   console.log("🔐 Started token expiration monitoring");
 
-  // Check immediately
-  checkTokenExpiration();
+  // Check immediately, but with a small delay to avoid startup loop
+  setTimeout(checkTokenExpiration, 2000);
 
   // Then check periodically
   tokenExpirationManager.checkInterval = setInterval(
