@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Slot, useRouter, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import "./global.css";
@@ -47,6 +47,8 @@ export default function RootLayout() {
   const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
   const { updateAvailable, latestVersion, openStore, checked } = useAppUpdate();
   const { addNotification } = notificationsStore();
+  const pathnameRef = useRef(pathname);
+  pathnameRef.current = pathname;
 
   // Initialize session activity tracking (handles PIN lock on background)
   useSessionActivity();
@@ -152,7 +154,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (!appIsReady) return;
     onLayoutRootView();
-    const path = pathname ?? "";
+    const path = pathnameRef.current ?? "";
     const timeoutId = setTimeout(() => {
       if (!user) {
         router.replace("/(stack)/(auth)/login");
@@ -205,7 +207,7 @@ export default function RootLayout() {
       console.log("✅ Redirecting to dashboard");
     }, 0);
     return () => clearTimeout(timeoutId);
-  }, [appIsReady, user, hasPin, isLocked, pathname, router]);
+  }, [appIsReady, user, hasPin, isLocked, router]);
 
   useEffect(() => {
     if (isAuthenticated && user) {
