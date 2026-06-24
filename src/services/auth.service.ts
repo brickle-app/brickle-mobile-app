@@ -15,15 +15,21 @@ const PRIVATE_KEY_STORAGE_KEY = "brickle_private_key";
 const REFRESH_TOKEN_STORAGE_KEY = "brickle_refresh_token";
 
 const BRICKLE_API_URL = process.env.EXPO_PUBLIC_BRICKLE_API_URL;
+const MISSING_GOOGLE_CLIENT_ID = "missing-google-client-id";
 
 export function buildGoogleAuthRequestConfig(
   env: Partial<Record<string, string | undefined>> = process.env,
   createRedirectUri = AuthSession.makeRedirectUri
 ) {
+  const webClientId = env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? MISSING_GOOGLE_CLIENT_ID;
+  const iosClientId = env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? webClientId;
+  const androidClientId = env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? webClientId;
+
   return {
-    webClientId: env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-    iosClientId: env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-    androidClientId: env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+    clientId: iosClientId ?? androidClientId ?? webClientId,
+    webClientId,
+    iosClientId,
+    androidClientId,
     redirectUri: createRedirectUri({
       native: "com.brickle.app:/oauthredirect",
     }),
@@ -55,8 +61,8 @@ export function getGoogleAuthBackendClientId(
   env: Partial<Record<string, string | undefined>> = process.env,
   platform: typeof Platform.OS = Platform.OS
 ) {
-  if (platform === "ios") return env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
-  if (platform === "android") return env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
+  if (platform === "ios") return env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+  if (platform === "android") return env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
   return env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 }
 

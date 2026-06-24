@@ -51,6 +51,30 @@ describe("buildGoogleAuthRequestConfig", () => {
       native: "com.brickle.app:/oauthredirect",
     });
   });
+
+  it("falls back to the web client ID when the iOS client ID is missing", () => {
+    const config = buildGoogleAuthRequestConfig(
+      {
+        EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: "web-client.apps.googleusercontent.com",
+      },
+      jest.fn(() => "com.brickle.app:/oauthredirect")
+    );
+
+    expect(config.clientId).toBe("web-client.apps.googleusercontent.com");
+    expect(config.webClientId).toBe("web-client.apps.googleusercontent.com");
+    expect(config.iosClientId).toBe("web-client.apps.googleusercontent.com");
+  });
+
+  it("uses a non-empty placeholder when Google client IDs are missing", () => {
+    const config = buildGoogleAuthRequestConfig(
+      {},
+      jest.fn(() => "com.brickle.app:/oauthredirect")
+    );
+
+    expect(config.clientId).toBe("missing-google-client-id");
+    expect(config.webClientId).toBe("missing-google-client-id");
+    expect(config.iosClientId).toBe("missing-google-client-id");
+  });
 });
 
 describe("getGoogleAuthResultStatus", () => {
@@ -77,6 +101,17 @@ describe("getGoogleAuthBackendClientId", () => {
     expect(getGoogleAuthBackendClientId(env, "ios")).toBe(
       "ios-client.apps.googleusercontent.com"
     );
+  });
+
+  it("falls back to the web client ID for backend validation when iOS client ID is missing", () => {
+    expect(
+      getGoogleAuthBackendClientId(
+        {
+          EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: "web-client.apps.googleusercontent.com",
+        },
+        "ios"
+      )
+    ).toBe("web-client.apps.googleusercontent.com");
   });
 });
 
