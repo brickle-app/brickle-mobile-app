@@ -1,9 +1,7 @@
 import * as Google from "expo-auth-session/providers/google";
-import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "expo-router";
-import { Platform } from "react-native";
 import { authStore } from "../store/auth.store";
 import { startInactivityTimer, startTokenExpirationMonitoring } from "../utils/sessionManager";
 import * as SecureStore from "expo-secure-store";
@@ -19,20 +17,14 @@ const MISSING_GOOGLE_CLIENT_ID = "missing-google-client-id";
 
 export function buildGoogleAuthRequestConfig(
   env: Partial<Record<string, string | undefined>> = process.env,
-  createRedirectUri = AuthSession.makeRedirectUri
+  _createRedirectUri?: unknown
 ) {
   const webClientId = env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? MISSING_GOOGLE_CLIENT_ID;
-  const iosClientId = env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? webClientId;
-  const androidClientId = env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? webClientId;
 
   return {
-    clientId: iosClientId ?? androidClientId ?? webClientId,
+    clientId: webClientId,
     webClientId,
-    iosClientId,
-    androidClientId,
-    redirectUri: createRedirectUri({
-      native: "com.brickle.app:/oauthredirect",
-    }),
+    redirectUri: "https://auth.expo.io/@pivelcode/brickle",
   };
 }
 
@@ -59,10 +51,8 @@ export function getGoogleAuthResultStatus(result: any): GoogleAuthResultStatus {
 
 export function getGoogleAuthBackendClientId(
   env: Partial<Record<string, string | undefined>> = process.env,
-  platform: typeof Platform.OS = Platform.OS
+  _platform?: string
 ) {
-  if (platform === "ios") return env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
-  if (platform === "android") return env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
   return env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 }
 

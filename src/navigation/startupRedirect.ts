@@ -16,9 +16,14 @@ export function getStartupRedirectPath({
   if (!appIsReady) return null;
 
   const path = pathname ?? "";
+  const isPublicAuthRoute =
+    path.includes("login") ||
+    path.includes("verify-otp") ||
+    path.includes("register") ||
+    path.includes("redirect-handler");
 
   if (!hasUser) {
-    return path.includes("login") ? null : "/(stack)/(auth)/login";
+    return isPublicAuthRoute ? null : "/(stack)/(auth)/login";
   }
 
   const postponePinSetup =

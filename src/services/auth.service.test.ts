@@ -32,7 +32,7 @@ jest.mock("expo-router", () => ({
 }));
 
 describe("buildGoogleAuthRequestConfig", () => {
-  it("uses platform Google client IDs and avoids the Expo auth proxy", () => {
+  it("uses the previously working web client ID and Expo auth proxy redirect", () => {
     const createRedirectUri = jest.fn(() => "com.brickle.app:/oauthredirect");
     const config = buildGoogleAuthRequestConfig(
       {
@@ -43,13 +43,10 @@ describe("buildGoogleAuthRequestConfig", () => {
       createRedirectUri
     );
 
+    expect(config.clientId).toBe("web-client.apps.googleusercontent.com");
     expect(config.webClientId).toBe("web-client.apps.googleusercontent.com");
-    expect(config.iosClientId).toBe("ios-client.apps.googleusercontent.com");
-    expect(config.androidClientId).toBe("android-client.apps.googleusercontent.com");
-    expect(config.redirectUri).not.toContain("auth.expo.io");
-    expect(createRedirectUri).toHaveBeenCalledWith({
-      native: "com.brickle.app:/oauthredirect",
-    });
+    expect(config.redirectUri).toBe("https://auth.expo.io/@pivelcode/brickle");
+    expect(createRedirectUri).not.toHaveBeenCalled();
   });
 
   it("falls back to the web client ID when the iOS client ID is missing", () => {
@@ -62,7 +59,7 @@ describe("buildGoogleAuthRequestConfig", () => {
 
     expect(config.clientId).toBe("web-client.apps.googleusercontent.com");
     expect(config.webClientId).toBe("web-client.apps.googleusercontent.com");
-    expect(config.iosClientId).toBe("web-client.apps.googleusercontent.com");
+    expect(config.redirectUri).toBe("https://auth.expo.io/@pivelcode/brickle");
   });
 
   it("uses a non-empty placeholder when Google client IDs are missing", () => {
@@ -73,7 +70,7 @@ describe("buildGoogleAuthRequestConfig", () => {
 
     expect(config.clientId).toBe("missing-google-client-id");
     expect(config.webClientId).toBe("missing-google-client-id");
-    expect(config.iosClientId).toBe("missing-google-client-id");
+    expect(config.redirectUri).toBe("https://auth.expo.io/@pivelcode/brickle");
   });
 });
 
@@ -97,9 +94,9 @@ describe("getGoogleAuthBackendClientId", () => {
     EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID: "android-client.apps.googleusercontent.com",
   };
 
-  it("uses the iOS client ID for backend token audience validation on iOS", () => {
+  it("uses the web client ID for backend token audience validation on iOS", () => {
     expect(getGoogleAuthBackendClientId(env, "ios")).toBe(
-      "ios-client.apps.googleusercontent.com"
+      "web-client.apps.googleusercontent.com"
     );
   });
 

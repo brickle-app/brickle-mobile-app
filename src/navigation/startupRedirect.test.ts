@@ -13,6 +13,18 @@ describe("getStartupRedirectPath", () => {
     ).toBeNull();
   });
 
+  it("does not redirect unauthenticated users while entering OTP", () => {
+    expect(
+      getStartupRedirectPath({
+        appIsReady: true,
+        hasUser: false,
+        hasPin: false,
+        isLocked: false,
+        pathname: "/verify-otp",
+      })
+    ).toBeNull();
+  });
+
   it("redirects unauthenticated users to login", () => {
     expect(
       getStartupRedirectPath({
