@@ -1,8 +1,6 @@
 import * as Google from "expo-auth-session/providers/google";
-import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import { useCallback, useEffect, useState } from "react";
-import { Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { authStore } from "../store/auth.store";
 import { startInactivityTimer, startTokenExpirationMonitoring } from "../utils/sessionManager";
@@ -16,7 +14,7 @@ const REFRESH_TOKEN_STORAGE_KEY = "brickle_refresh_token";
 
 const BRICKLE_API_URL = process.env.EXPO_PUBLIC_BRICKLE_API_URL;
 const MISSING_GOOGLE_CLIENT_ID = "missing-google-client-id";
-const GOOGLE_NATIVE_REDIRECT_URI = "com.brickle.app:/oauthredirect";
+const GOOGLE_EXPO_PROXY_REDIRECT_URI = "https://auth.expo.io/@pivelcode/brickle";
 
 function configuredClientId(clientId: string | undefined) {
   return clientId?.trim() || undefined;
@@ -24,20 +22,15 @@ function configuredClientId(clientId: string | undefined) {
 
 export function buildGoogleAuthRequestConfig(
   env: Partial<Record<string, string | undefined>> = process.env,
-  createRedirectUri = AuthSession.makeRedirectUri,
-  platform = Platform.OS
+  _createRedirectUri?: unknown,
+  _platform?: string
 ) {
   const webClientId = configuredClientId(env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID) ?? MISSING_GOOGLE_CLIENT_ID;
-  const iosClientId = configuredClientId(env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID);
-  const androidClientId = configuredClientId(env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID);
-  const platformClientId = platform === "ios" ? iosClientId : platform === "android" ? androidClientId : undefined;
 
   return {
-    clientId: platformClientId ?? webClientId,
+    clientId: webClientId,
     webClientId,
-    iosClientId,
-    androidClientId,
-    redirectUri: createRedirectUri({ native: GOOGLE_NATIVE_REDIRECT_URI }),
+    redirectUri: GOOGLE_EXPO_PROXY_REDIRECT_URI,
   };
 }
 
@@ -64,16 +57,9 @@ export function getGoogleAuthResultStatus(result: any): GoogleAuthResultStatus {
 
 export function getGoogleAuthBackendClientId(
   env: Partial<Record<string, string | undefined>> = process.env,
-  platform = Platform.OS
+  _platform?: string
 ) {
-  const webClientId = configuredClientId(env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID);
-  const iosClientId = configuredClientId(env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID);
-  const androidClientId = configuredClientId(env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID);
-
-  if (platform === "ios") return iosClientId ?? webClientId;
-  if (platform === "android") return androidClientId ?? webClientId;
-
-  return webClientId;
+  return configuredClientId(env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID);
 }
 
 interface AuthResponse {
