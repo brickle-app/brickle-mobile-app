@@ -6,7 +6,8 @@ export async function generatePermit(
   tokenAddress,
   paymasterAddress,
   userAddress,
-  amount
+  amount,
+  options = {}
 ) {
   const privateKey = authStore.getState().privateKey;
 
@@ -28,29 +29,21 @@ export async function generatePermit(
       provider
     );
 
-    let name;
-    try {
-      name = await token.name();
-    } catch (_nameError) {
-      name = "COP Coin";
-    }
+    const name = await token.name();
 
     const version = "1";
 
     const network = await provider.getNetwork();
     const chainId = network.chainId;
 
-    let nonce;
-    try {
-      nonce = await token.nonces(userAddress);
-    } catch (_nonceError) {
-      nonce = 0; // Start with nonce 0 as fallback
-    }
+    const nonce = await token.nonces(userAddress);
 
     const deadline = Math.floor(Date.now() / 1000) + 3600;
-    const campaignCommitment = ethers.parseUnits(amount.toString(), 6);
-    const relayerFee = ethers.parseUnits("0.1", 6);
-    const totalPermitAmount = campaignCommitment + relayerFee;
+    const totalPermitAmount = getPermitValue({
+      operation: options.operation || "commitFunds",
+      amount,
+      amountIsBaseUnits: options.amountIsBaseUnits === true,
+    });
 
     const domain = {
       name,
@@ -91,4 +84,26 @@ export async function generatePermit(
       `Network error during permit generation: ${networkError.message}`
     );
   }
+}
+
+export function getPermitValue({
+  operation,
+  amount,
+  amountIsBaseUnits = false,
+}) {
+  const relayerFee = ethers.parseUnits("0.1", 6);
+
+  if (operation === "claimRent") {
+    return relayerFee;
+  }
+
+  if (operation !== "commitFunds" && operation !== "receivePaymentSponsored") {
+    throw new Error(`Unsupported permit operation: ${operation}`);
+  }
+
+  const normalizedAmount = amountIsBaseUnits
+    ? ethers.getBigInt(amount.toString())
+    : ethers.parseUnits(amount.toString(), 6);
+
+  return normalizedAmount + relayerFee;
 }

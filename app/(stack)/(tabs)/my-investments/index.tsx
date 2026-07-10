@@ -427,7 +427,8 @@ export default function MyInvestments() {
         tokenAddress,
         paymasterAddress,
         user.walletAddress || "",
-        0
+        0,
+        { operation: "claimRent" }
       );
 
       const claimRentDto: ClaimRent = {
