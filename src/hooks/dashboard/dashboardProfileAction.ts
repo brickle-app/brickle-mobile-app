@@ -1,4 +1,14 @@
+import { hasRequiredProfileInfo } from "@/src/utils/profileVerification";
+
 type DashboardProfileUser = {
+  firstName?: string | null;
+  lastName?: string | null;
+  phoneNumber?: string | null;
+  dateOfBirth?: Date | string | null;
+  nationality?: string | null;
+  countryOfResidence?: string | null;
+  documentType?: number | null;
+  documentNumber?: string | null;
   isBasicProfileComplete?: boolean | null;
   isFullProfileComplete?: boolean | null;
   isProfileUnderReview?: boolean | null;
@@ -15,6 +25,6 @@ export function getDashboardProfileAction(
 ): DashboardProfileAction {
   if (user?.isFullProfileComplete) return "discover";
   if (user?.isProfileUnderReview) return "review";
-  if (!user?.isBasicProfileComplete) return "complete-profile";
+  if (!hasRequiredProfileInfo(user)) return "complete-profile";
   return "upload-document";
 }

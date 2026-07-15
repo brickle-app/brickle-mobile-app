@@ -164,6 +164,7 @@ export default function RootLayout() {
         hasUser: Boolean(user),
         hasPin,
         isLocked,
+        isBasicProfileComplete: user?.isBasicProfileComplete,
         pathname,
       });
 

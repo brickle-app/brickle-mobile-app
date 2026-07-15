@@ -49,6 +49,45 @@ describe("getStartupRedirectPath", () => {
     ).toBe("/(stack)/pin-setup");
   });
 
+  it("redirects authenticated users with incomplete basic profile to complete profile before dashboard", () => {
+    expect(
+      getStartupRedirectPath({
+        appIsReady: true,
+        hasUser: true,
+        hasPin: true,
+        isLocked: false,
+        isBasicProfileComplete: false,
+        pathname: "/dashboard",
+      })
+    ).toBe("/(stack)/(auth)/complete-profile");
+  });
+
+  it("redirects incomplete users to complete profile before PIN setup", () => {
+    expect(
+      getStartupRedirectPath({
+        appIsReady: true,
+        hasUser: true,
+        hasPin: false,
+        isLocked: false,
+        isBasicProfileComplete: false,
+        pathname: "/dashboard",
+      })
+    ).toBe("/(stack)/(auth)/complete-profile");
+  });
+
+  it("does not redirect incomplete users already completing profile", () => {
+    expect(
+      getStartupRedirectPath({
+        appIsReady: true,
+        hasUser: true,
+        hasPin: true,
+        isLocked: false,
+        isBasicProfileComplete: false,
+        pathname: "/complete-profile",
+      })
+    ).toBeNull();
+  });
+
   it("redirects locked authenticated users to pin lock", () => {
     expect(
       getStartupRedirectPath({

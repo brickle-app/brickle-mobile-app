@@ -40,6 +40,7 @@ interface State {
   setBalance: (balance: string) => void;
   setNewUser: (newUser: boolean) => void;
   setPrivateKey: (privateKey: string) => void;
+  clearPrivateKey: () => void;
   logout: () => Promise<void>;
   reset: () => Promise<void>;
   setTotalReturn: (totalReturn: number) => void;
@@ -124,6 +125,7 @@ export const authStore = create<State>()(
           set({ error: "Failed to set private key" });
         }
       },
+      clearPrivateKey: () => set({ privateKey: null }),
       setTokenExpiration: (tokenExpiration: number) => {
         try {
           set({ tokenExpiration });

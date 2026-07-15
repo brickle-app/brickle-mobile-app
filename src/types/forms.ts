@@ -101,6 +101,7 @@ export interface RegisterFormData {
   lastName: string;
   email: string;
   phone: string;
+  backupCodeConfirmation: string;
   termsAccepted: boolean;
 }
 

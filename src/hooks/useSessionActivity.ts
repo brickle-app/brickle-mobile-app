@@ -8,7 +8,7 @@ import { usePinStore } from '../store/pin.store';
 export const useSessionActivity = () => {
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      const { isAuthenticated } = authStore.getState();
+      const { isAuthenticated, clearPrivateKey } = authStore.getState();
       const { hasPin, lock } = usePinStore.getState();
 
       if (nextAppState === 'active') {
@@ -26,6 +26,7 @@ export const useSessionActivity = () => {
         }
       } else if (nextAppState === 'background' || nextAppState === 'inactive') {
         stopInactivityTimer();
+        clearPrivateKey();
         if (isAuthenticated && hasPin) lock();
       }
     };

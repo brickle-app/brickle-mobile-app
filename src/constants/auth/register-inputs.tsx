@@ -2,10 +2,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/assets/Colors";
 import { TextInputProps } from "react-native";
 interface RegisterInput {
-  id: string;
+  id: "firstName" | "lastName" | "email" | "phone";
   label: string;
   placeholder: string;
   type: TextInputProps["keyboardType"];
+  secureTextEntry?: boolean;
+  description?: string;
   icon: React.ReactNode;
 }
 export const registerInputs: RegisterInput[] = [

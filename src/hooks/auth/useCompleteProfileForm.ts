@@ -156,8 +156,16 @@ export function useCompleteProfileForm() {
           isProfileUnderReview: false,
         });
 
-        // Navigate back (dashboard/wallet will handle next step)
-        router.back();
+        Alert.alert(
+          "Perfil completado",
+          "Tus datos fueron guardados correctamente. Ahora puedes subir tu documento de identidad para continuar la verificación.",
+          [
+            {
+              text: "Agregar documentos",
+              onPress: () => router.back(),
+            },
+          ]
+        );
 
       } catch (error: any) {
         console.error("Error updating user profile:", error);

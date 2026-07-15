@@ -17,13 +17,15 @@ import StandaloneHeader from "../ui/customHeader/standaloneHeder";
 import { Colors } from "@/assets/Colors";
 import { PartialBrickleUser } from "@/src/types/user.types";
 import { AuthErrorModal } from "@/src/components/ui/modal/AuthErrorModal";
+import { purchaseLeasingAsset } from "./leasingPurchase";
 
 interface LeasingDetailScreenProps {
   assetId: string;
   userBalance: string;
   source?: "dashboard" | "discover-page" | "portfolio";
   onBackPress: () => void;
-  onNavigateToLogin: () => void;
+  onNavigateToWalletRestore: () => void;
+  onNavigateToWalletUpgrade: () => void;
   onNavigateToPortfolio: () => void;
 }
 
@@ -32,13 +34,14 @@ export const LeasingDetailScreen = ({
   userBalance,
   source = "discover-page",
   onBackPress,
-  onNavigateToLogin,
+  onNavigateToWalletRestore,
+  onNavigateToWalletUpgrade,
   onNavigateToPortfolio,
 }: LeasingDetailScreenProps) => {
   const user = authStore((state) => state.user);
-  const privateKey = authStore((state) => state.privateKey);
   const { triggerRefresh } = refreshStore();
   const [showAuthError, setShowAuthError] = useState(false);
+  const [walletAction, setWalletAction] = useState<"restore" | "upgrade">("restore");
   const {
     asset,
     loading,
@@ -64,40 +67,32 @@ export const LeasingDetailScreen = ({
   }, [assetId, refreshAssetData]);
 
   const handleOnPurchase = async (userParam: PartialBrickleUser, tokens: number, pricePerToken: number) => {
-    if (!userParam) {
-      console.error("❌ No user data available for purchase");
-      return false;
-    }
-
-    if (!userParam.walletAddress) {
-      console.error("❌ No wallet address available for purchase - user may need to complete profile");
-      return false;
-    }
-
-    if (!userParam.email) {
-      console.error("❌ No email available for purchase");
-      return false;
-    }
-
-    if (!privateKey) {
-      console.error("❌ Private key not found in auth store");
-      setIsBuyAssetModalVisible(false);
-      setShowAuthError(true);
-      return false;
-    }
-
-    const { success } = await handleBuyAsset(
-      userParam.email,
-      userParam.walletAddress,
+    return purchaseLeasingAsset({
+      user: userParam,
       tokens,
-      tokens * pricePerToken
-    );
-    return success;
+      pricePerToken,
+      handleBuyAsset,
+      onMissingPrivateKey: () => {
+        setWalletAction("restore");
+        setIsBuyAssetModalVisible(false);
+        setShowAuthError(true);
+      },
+      onWalletUpgradeRequired: () => {
+        setWalletAction("upgrade");
+        setIsBuyAssetModalVisible(false);
+        setShowAuthError(true);
+      },
+    });
   }
 
   const handleRetryAuth = () => {
     setShowAuthError(false);
-    onNavigateToLogin();
+    if (walletAction === "upgrade") {
+      onNavigateToWalletUpgrade();
+      return;
+    }
+
+    onNavigateToWalletRestore();
   };
 
   const handleCloseAuthError = () => {
@@ -219,8 +214,11 @@ export const LeasingDetailScreen = ({
         isVisible={showAuthError}
         onClose={handleCloseAuthError}
         onRetry={handleRetryAuth}
-        title="Sesión no válida"
-        message="No se pudo validar tu sesión. Por favor, inicia sesión nuevamente para continuar."
+        title="Wallet no disponible"
+        message={walletAction === "upgrade"
+          ? "Para comprar debes actualizar tu wallet al nuevo sistema con backup code. Este paso es obligatorio para proteger tu cuenta."
+          : "Tu sesión está activa, pero este dispositivo no tiene la clave necesaria para firmar la compra. Restaura tu wallet para continuar."}
+        retryLabel={walletAction === "upgrade" ? "Actualizar wallet" : "Restaurar wallet"}
       />
     </View>
   );

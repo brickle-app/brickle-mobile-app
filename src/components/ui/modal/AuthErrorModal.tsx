@@ -9,6 +9,7 @@ interface AuthErrorModalProps {
   onRetry: () => void;
   title?: string;
   message?: string;
+  retryLabel?: string;
 }
 
 export const AuthErrorModal = ({
@@ -17,6 +18,7 @@ export const AuthErrorModal = ({
   onRetry,
   title = "Error de inicio de sesión",
   message = "No se pudo establecer la sesión correctamente. Por favor, intenta nuevamente.",
+  retryLabel = "Reintentar",
 }: AuthErrorModalProps) => {
   if (!isVisible) return null;
 
@@ -55,7 +57,7 @@ export const AuthErrorModal = ({
           </Text>
 
           <Button
-            label="Reintentar"
+            label={retryLabel}
             onPress={onRetry}
             width="w-[250px]"
             textClassName="!text-base"

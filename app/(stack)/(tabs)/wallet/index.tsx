@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { ScrollView, SafeAreaView, View, RefreshControl } from "react-native";
+import { ScrollView, SafeAreaView, View, RefreshControl, Text } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import BackGroundGradient from "@/src/components/ui/backgroundGradient/BackGroundGradient";
 
@@ -27,6 +27,9 @@ import {
   averageMonthlyCashflowFromProjectionPoints,
 } from "@/src/utils/portfolioProjection.utility";
 import { useOnRefreshTriggerIncrement } from "@/src/hooks/useOnRefreshTriggerIncrement";
+import { getWalletVerificationNotice } from "@/src/utils/walletFeatureAccess";
+import { Ionicons } from "@expo/vector-icons";
+import { Colors } from "@/assets/Colors";
 
 const WalletScreen = () => {
   const router = useRouter();
@@ -36,6 +39,8 @@ const WalletScreen = () => {
   const { getBalance } = useWallet();
   const [balance, setBalance] = useState<string | number>(0);
   const walletAddress = authStore((state) => state.user?.walletAddress);
+  const user = authStore((state) => state.user);
+  const walletVerificationNotice = getWalletVerificationNotice(user);
   const currentValue = authStore((state) => state.currentValue);
   const totalInvested = authStore((state) => state.totalInvested);
   const roi = authStore((state) => state.roi);
@@ -162,6 +167,22 @@ const WalletScreen = () => {
     handleAction(tab, () => setActiveTab(tab));
   };
 
+  const verificationNoticeBanner = walletVerificationNotice ? (
+    <View className="mb-4 flex-row items-start gap-3 rounded-2xl border border-orange-primary/30 bg-orange-primary/10 p-4">
+      <View className="rounded-full bg-orange-primary/15 p-2">
+        <Ionicons name="time-outline" size={22} color={Colors.orangePrimary} />
+      </View>
+      <View className="flex-1">
+        <Text className="font-libre-bold text-sm text-text-primary">
+          {walletVerificationNotice.title}
+        </Text>
+        <Text className="mt-1 font-libre-regular text-xs leading-5 text-gray-600">
+          {walletVerificationNotice.message}
+        </Text>
+      </View>
+    </View>
+  ) : null;
+
   return (
     <>
       <SafeAreaView className="flex-1">
@@ -169,6 +190,7 @@ const WalletScreen = () => {
         {activeTab !== "transactions" ? (
           <ScrollView className="flex-1 px-4 pt-4" refreshControl={<RefreshControl {...refreshControlProps} />}>
             <BalanceCard title="Saldo disponible" balance={balance} walletAddress={walletAddress} />
+            {verificationNoticeBanner}
             <WalletTabs activeTab={activeTab} onTabChange={handleTabChange} />
             {renderTabContent()}
             {!activeTab && (
@@ -185,6 +207,7 @@ const WalletScreen = () => {
           <View className="flex-1 pt-4">
             <View className="px-4">
               <BalanceCard title="Saldo disponible" balance={balance} walletAddress={walletAddress} />
+              {verificationNoticeBanner}
               <WalletTabs activeTab={activeTab} onTabChange={handleTabChange} />
             </View>
             {renderTabContent()}

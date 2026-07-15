@@ -5,6 +5,7 @@ import { authStore } from "@/src/store/auth.store";
 import { Colors } from "@/assets/Colors";
 import { useAppNavigation } from "@/src/context/NavigationContext";
 import { leasingParamsStore } from "@/src/store/leasingParams.store";
+import { Href } from "expo-router";
 
 /**
  * Detalle de leasing: lee leasingId del store, pide GET /api/Leasing/{id} y muestra datos.
@@ -61,7 +62,8 @@ export default function LeasingDetailScreenRoute() {
           leasingParamsStore.getState().clear();
           nav.push(getBackDestination());
         }}
-        onNavigateToLogin={() => nav.push("/(stack)/(auth)/login")}
+        onNavigateToWalletRestore={() => nav.push("/(stack)/wallet-restore")}
+        onNavigateToWalletUpgrade={() => nav.push("/(stack)/wallet-upgrade" as Href)}
         onNavigateToPortfolio={() => nav.push("/(stack)/(tabs)/portfolio")}
       />
     </View>

@@ -7,7 +7,8 @@ import uuid from "react-native-uuid";
 
 import { authStore } from "@/src/store/auth.store";
 import { usePinStore } from "@/src/store/pin.store";
-import * as SecureStore from "expo-secure-store";
+import { createAndSaveWalletBackup } from "@/src/services/wallet-backup-registration.service";
+import { generateWalletBackupCode, normalizeWalletBackupCode } from "@/src/services/wallet-backup-code.service";
 
 /**
  * Validation rules for the register form
@@ -47,6 +48,10 @@ const validationRules = {
       return "El teléfono debe ser un número móvil válido (empezar con 3)";
     return null;
   },
+  backupCodeConfirmation: (value: string) => {
+    if (!value.trim()) return "Confirma tu backup code";
+    return null;
+  },
 };
 
 /**
@@ -56,11 +61,13 @@ const validationRules = {
 export const useRegisterForm = () => {
   const { userEmail, setUser, setIsAuthenticated } = authStore();
   // Initialize form with email from auth store if available
+  const [backupCode] = useState(() => generateWalletBackupCode());
   const initialFormState: RegisterFormData = {
     firstName: "",
     lastName: "",
     email: userEmail || "",
     phone: "",
+    backupCodeConfirmation: "",
     termsAccepted: false,
   };
   const currentSession = authStore((state) => state.accessToken);
@@ -102,9 +109,14 @@ export const useRegisterForm = () => {
    * @returns true if the form is valid
    */
   const validateForm = () => {
-    return validation.validateForm(
+    const isValid = validation.validateForm(
       formData as unknown as Record<string, string>
     );
+    if (normalizeWalletBackupCode(formData.backupCodeConfirmation) !== backupCode) {
+      validation.handleChange("backupCodeConfirmation", formData.backupCodeConfirmation);
+      return false;
+    }
+    return isValid;
   };
 
   /**
@@ -123,11 +135,10 @@ export const useRegisterForm = () => {
 
     try {
       // Step 2: Create wallet locally with ethers
-      const wallet = ethers.Wallet.createRandom();
+      const wallet = ethers.Wallet.fromPhrase(backupCode);
       const privateKey = wallet.privateKey;
       const walletAddress = wallet.address;
 
-      await SecureStore.setItemAsync("brickle_private_key", privateKey);
       authStore.getState().setPrivateKey(privateKey);
 
       // Step 3: Create user in Brickle database
@@ -152,6 +163,12 @@ export const useRegisterForm = () => {
         setSubmitError("Error al crear el usuario en Brickle");
         return null;
       }
+
+      await createAndSaveWalletBackup({
+        privateKey,
+        backupCode,
+        walletAddress,
+      });
 
       // Step 4: Update in-memory authenticated user
       const userData = {
@@ -230,6 +247,7 @@ export const useRegisterForm = () => {
       formData.lastName.trim() !== "" &&
       formData.email.trim() !== "" &&
       formData.phone.trim() !== "" &&
+      normalizeWalletBackupCode(formData.backupCodeConfirmation) === backupCode &&
       formData.termsAccepted &&
       Object.keys(validation.errors).length === 0
     );
@@ -255,5 +273,6 @@ export const useRegisterForm = () => {
     submitError,
     touched: validation.touched,
     errors: validation.errors,
+    backupCode,
   };
 };

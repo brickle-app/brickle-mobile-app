@@ -31,6 +31,7 @@ const RegisterScreen = () => {
     isLoading,
     submitError,
     errors,
+    backupCode,
   } = useRegisterForm();
 
   const [showErrorModal, setShowErrorModal] = useState(false);
@@ -120,6 +121,7 @@ const RegisterScreen = () => {
                       formData[input.id as keyof typeof formData] as string
                     }
                     keyboardType={input.type}
+                    secureTextEntry={input.secureTextEntry}
                     onChangeText={(text) =>
                       handleChange(input.id as keyof typeof formData, text)
                     }
@@ -132,13 +134,36 @@ const RegisterScreen = () => {
                     description={
                       isEmailFromGoogleAuth
                         ? "Este email fue verificado durante la autenticación con Google"
-                        : undefined
+                        : input.description
                     }
                     onFocus={() => scrollFieldIntoView(input.id)}
                   />
                 </View>
               );
             })}
+            <View className="bg-white border border-blue-primary/20 rounded-2xl p-4 gap-2">
+              <Text className="text-text-primary text-xs font-semibold uppercase tracking-widest text-center">
+                Tu backup code
+              </Text>
+              <Text selectable className="text-blue-primary font-libre-bold text-xl leading-8 text-center">
+                {backupCode}
+              </Text>
+              <Text className="text-text-primary text-xs leading-5 text-center">
+                Guárdalo fuera de la app. Brickle no puede verlo ni recuperarlo por ti.
+              </Text>
+            </View>
+            <FormField
+              width="w-full"
+              label="Confirmar backup code"
+              placeholder="Escribe las 12 palabras"
+              value={formData.backupCodeConfirmation}
+              onChangeText={(text) => handleChange("backupCodeConfirmation", text.toLowerCase())}
+              onBlur={() => handleBlur("backupCodeConfirmation")}
+              icon={<Ionicons name="shield-checkmark-outline" size={24} color={Colors.textPrimary} />}
+              error={errors.backupCodeConfirmation}
+              description="Debes confirmarlo para completar el registro."
+              onFocus={() => scrollFieldIntoView("backupCodeConfirmation")}
+            />
             <View className="w-full flex-row items-center gap-2 mt-4">
               <Pressable
                 onPress={() =>

@@ -33,7 +33,8 @@ const LeasingDetailScreenWrapper = () => {
       userBalance={balance || "0"}
       source={source as "dashboard" | "discover-page" | "portfolio" | undefined}
       onBackPress={() => router.push(getBackDestination())}
-      onNavigateToLogin={() => router.push("/(stack)/(auth)/login")}
+      onNavigateToWalletRestore={() => router.push("/(stack)/wallet-restore")}
+      onNavigateToWalletUpgrade={() => router.push("/(stack)/wallet-upgrade" as Href)}
       onNavigateToPortfolio={() => router.push("/(stack)/(tabs)/portfolio")}
     />
   );

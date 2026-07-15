@@ -2,6 +2,7 @@ import {
   buildGoogleAuthRequestConfig,
   getGoogleAuthBackendClientId,
   getGoogleAuthResultStatus,
+  getPrivateKey,
   restoreSessionFromRefreshToken,
 } from "./auth.service";
 import * as SecureStore from "expo-secure-store";
@@ -159,5 +160,22 @@ describe("restoreSessionFromRefreshToken", () => {
       "brickle_refresh_token",
       "new-refresh-token"
     );
+  });
+});
+
+describe("getPrivateKey", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    authStore.setState({ privateKey: null });
+  });
+
+  it("returns only the in-memory private key and never reads SecureStore", async () => {
+    await expect(getPrivateKey()).resolves.toBeNull();
+    expect(SecureStore.getItemAsync).not.toHaveBeenCalledWith("brickle_private_key");
+
+    authStore.setState({ privateKey: "0xprivate" });
+
+    await expect(getPrivateKey()).resolves.toBe("0xprivate");
+    expect(SecureStore.getItemAsync).not.toHaveBeenCalledWith("brickle_private_key");
   });
 });

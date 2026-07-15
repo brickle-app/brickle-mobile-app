@@ -1,6 +1,7 @@
 import Constants from "expo-constants";
 import { View, ScrollView, Text } from "react-native";
-import React from "react";
+import React, { useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import BackGroundGradient from "@/src/components/ui/backgroundGradient/BackGroundGradient";
 import {
   UserHeader,
@@ -11,14 +12,29 @@ import {
 import { useRouter } from "expo-router";
 import { authStore } from "@/src/store/auth.store";
 import { BrickleUser } from "@/src/types/user.types";
+import { shouldShowCompleteProfileWarning as getShouldShowCompleteProfileWarning } from "@/src/utils/profileVerification";
+import { BrickleService } from "@/src/services/brickle.service";
+import { refreshAuthenticatedUser } from "@/src/services/refresh-authenticated-user";
 
 const ProfileScreen = () => {
   const router = useRouter();
   const user = authStore((state) => state.user);
+  const setUser = authStore((state) => state.setUser);
   const logout = authStore((state) => state.logout);
+  const shouldShowCompleteProfileWarning = getShouldShowCompleteProfileWarning(user);
   const currentYear = new Date().getFullYear();
   const appVersion = Constants.expoConfig?.version ?? "1.0.0";
   // Mock data for demonstration purposes
+
+  useFocusEffect(
+    useCallback(() => {
+      void refreshAuthenticatedUser({
+        email: user?.email,
+        getUserByEmail: BrickleService.getUserByEmail,
+        setUser,
+      });
+    }, [setUser, user?.email])
+  );
 
   // Mock logout function
   const handleLogout = () => {
@@ -44,7 +60,7 @@ const ProfileScreen = () => {
 
 
         {/* Warning if profile is incomplete */}
-        {!user?.isFullProfileComplete && (
+        {shouldShowCompleteProfileWarning && (
           <View className="mb-6">
             <UserWarning
               warningMessage="Completa tu perfil"

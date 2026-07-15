@@ -9,7 +9,6 @@ import { ethers } from "ethers";
 
 WebBrowser.maybeCompleteAuthSession();
 
-const PRIVATE_KEY_STORAGE_KEY = "brickle_private_key";
 const REFRESH_TOKEN_STORAGE_KEY = "brickle_refresh_token";
 
 const BRICKLE_API_URL = process.env.EXPO_PUBLIC_BRICKLE_API_URL;
@@ -119,7 +118,6 @@ export async function createLocalWallet() {
   const privateKey = wallet.privateKey;
   const walletAddress = wallet.address;
 
-  await SecureStore.setItemAsync(PRIVATE_KEY_STORAGE_KEY, privateKey);
   authStore.getState().setPrivateKey(privateKey);
 
   return { walletAddress, privateKey };
@@ -128,12 +126,6 @@ export async function createLocalWallet() {
 export async function getPrivateKey(): Promise<string | null> {
   const storedKey = authStore.getState().privateKey;
   if (storedKey) return storedKey;
-
-  const secureKey = await SecureStore.getItemAsync(PRIVATE_KEY_STORAGE_KEY);
-  if (secureKey) {
-    authStore.getState().setPrivateKey(secureKey);
-    return secureKey;
-  }
 
   return null;
 }
@@ -402,7 +394,6 @@ export const useCreateUserWallet = () => {
     const privateKey = wallet.privateKey;
     const walletAddress = wallet.address;
 
-    await SecureStore.setItemAsync(PRIVATE_KEY_STORAGE_KEY, privateKey);
     authStore.getState().setPrivateKey(privateKey);
 
     return {

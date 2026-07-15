@@ -1,5 +1,5 @@
 import { View, ActivityIndicator } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Href, useLocalSearchParams, useRouter } from "expo-router";
 import { LeasingDetailScreen } from "@/src/components";
 import { authStore } from "@/src/store/auth.store";
 import { Colors } from "@/assets/Colors";
@@ -32,7 +32,8 @@ export default function AssetDetailPage() {
         userBalance={balance || "0"}
         source={(source as "dashboard" | "discover-page" | "portfolio") ?? "discover-page"}
         onBackPress={() => router.back()}
-        onNavigateToLogin={() => router.push("/(stack)/(auth)/login")}
+        onNavigateToWalletRestore={() => router.push("/(stack)/wallet-restore")}
+        onNavigateToWalletUpgrade={() => router.push("/(stack)/wallet-upgrade" as Href)}
         onNavigateToPortfolio={() => router.push("/(stack)/(tabs)/portfolio")}
       />
     </View>

@@ -34,6 +34,8 @@ const StackLayout = () => {
         <Stack.Screen name="asset-detail" options={{ headerShown: false }} />
         <Stack.Screen name="pin-lock" options={{ headerShown: false, animation: "fade" }} />
         <Stack.Screen name="pin-setup" options={{ headerShown: false, gestureEnabled: false }} />
+        <Stack.Screen name="wallet-restore" options={{ headerShown: false }} />
+        <Stack.Screen name="wallet-upgrade" options={{ headerShown: false, gestureEnabled: false }} />
       </Stack>
     </NavigationProvider>
   );
