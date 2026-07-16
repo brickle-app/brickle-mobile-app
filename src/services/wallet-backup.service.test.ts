@@ -82,4 +82,15 @@ describe("wallet backup API service", () => {
     expect(refreshToken).toHaveBeenCalledTimes(1);
     expect(brickleClient.post).toHaveBeenCalledTimes(1);
   });
+
+  it("preserves the original 401 when token refresh throws", async () => {
+    const unauthorized = { response: { status: 401 } };
+    jest.mocked(brickleClient.post).mockRejectedValueOnce(unauthorized);
+    jest.mocked(refreshToken).mockRejectedValueOnce(new Error("refresh failed"));
+
+    await expect(upgradeWalletBackup(backup)).rejects.toBe(unauthorized);
+
+    expect(refreshToken).toHaveBeenCalledTimes(1);
+    expect(brickleClient.post).toHaveBeenCalledTimes(1);
+  });
 });

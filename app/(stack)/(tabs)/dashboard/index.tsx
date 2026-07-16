@@ -30,6 +30,7 @@ import { Colors } from "@/assets/Colors";
 import { ProfileDocumentCta } from "@/src/components/dashboard/ProfileDocumentCta";
 import { needsIdentityDocument } from "@/src/utils/profileVerification";
 import { refreshAuthenticatedUser } from "@/src/services/refresh-authenticated-user";
+import { logNonCriticalError } from "@/src/utils/nonCriticalErrorLogger";
 
 /** Espacio bajo el scroll cuando el anuncio flotante está visible (~altura tarjeta + respiro). */
 const CLAIM_BANNER_SCROLL_PADDING = 100;
@@ -96,7 +97,7 @@ const DashboardScreen = () => {
         const assets = await getInvestmentsGroupedByCategory(user.email);
         setSuggestedAssets(assets.slice(0, 6));
       } catch (error) {
-        console.error('Error fetching suggested assets:', error);
+        logNonCriticalError("Error fetching suggested assets:", error);
       } finally {
         setIsLoadingAssets(false);
       }
@@ -111,7 +112,7 @@ const DashboardScreen = () => {
       await refreshBalance();
       await loadRecentSearches();
     } catch (error) {
-      console.error('Error fetching balance:', error);
+      logNonCriticalError("Error fetching balance:", error);
     } finally {
       setIsLoadingBalance(false);
     }

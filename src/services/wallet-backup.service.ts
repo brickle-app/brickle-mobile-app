@@ -15,7 +15,12 @@ async function withAuthRefreshRetry<T>(request: () => Promise<T>) {
   } catch (error) {
     if (!isUnauthorized(error)) throw error;
 
-    const refresh = await refreshToken();
+    let refresh: Awaited<ReturnType<typeof refreshToken>>;
+    try {
+      refresh = await refreshToken();
+    } catch {
+      throw error;
+    }
     if (!refresh.success) throw error;
 
     return request();

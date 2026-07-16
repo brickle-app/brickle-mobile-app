@@ -9,6 +9,7 @@ import { authStore } from "@/src/store/auth.store";
 import { usePinStore } from "@/src/store/pin.store";
 import { createAndSaveWalletBackup } from "@/src/services/wallet-backup-registration.service";
 import { generateWalletBackupCode, normalizeWalletBackupCode } from "@/src/services/wallet-backup-code.service";
+import { getBackupCodeConfirmationError } from "@/src/utils/registerBackupCodeValidation";
 
 /**
  * Validation rules for the register form
@@ -112,8 +113,13 @@ export const useRegisterForm = () => {
     const isValid = validation.validateForm(
       formData as unknown as Record<string, string>
     );
-    if (normalizeWalletBackupCode(formData.backupCodeConfirmation) !== backupCode) {
+    const backupCodeError = getBackupCodeConfirmationError(
+      formData.backupCodeConfirmation,
+      backupCode
+    );
+    if (backupCodeError) {
       validation.handleChange("backupCodeConfirmation", formData.backupCodeConfirmation);
+      setSubmitError(backupCodeError);
       return false;
     }
     return isValid;

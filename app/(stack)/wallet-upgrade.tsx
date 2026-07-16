@@ -7,10 +7,12 @@ import { Button } from "@/src/components/ui/button/Button";
 import { FormField } from "@/src/components/ui/input";
 import StandaloneHeader from "@/src/components/ui/customHeader/standaloneHeder";
 import {
-  createSecureWalletUpgrade,
+  activateSecureWalletUpgrade,
+  generateSecureWalletUpgradeBackupCode,
   getWalletActivationUserMessage,
 } from "@/src/services/wallet-upgrade.service";
 import { normalizeWalletBackupCode } from "@/src/services/wallet-backup-code.service";
+import { goBackOrReplace } from "@/src/utils/navigationFallback";
 
 export default function WalletUpgradeScreen() {
   const router = useRouter();
@@ -19,21 +21,23 @@ export default function WalletUpgradeScreen() {
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const goBackOrWallet = () => goBackOrReplace(router, "/(stack)/(tabs)/wallet");
+
   const handleCreateWallet = async () => {
     try {
       setError(null);
       setIsUpgrading(true);
-      const result = await createSecureWalletUpgrade();
-      setBackupCode(result.backupCode);
+      const generatedBackupCode = await generateSecureWalletUpgradeBackupCode();
+      setBackupCode(generatedBackupCode);
     } catch (activationError) {
-      console.error("[wallet-activation-screen] create wallet failed", activationError);
+      console.warn("[wallet-activation-screen] create wallet failed", activationError);
       setError(getWalletActivationUserMessage(activationError));
     } finally {
       setIsUpgrading(false);
     }
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!backupCode) return;
 
     if (normalizeWalletBackupCode(confirmation) !== backupCode) {
@@ -41,12 +45,22 @@ export default function WalletUpgradeScreen() {
       return;
     }
 
-    router.back();
+    try {
+      setError(null);
+      setIsUpgrading(true);
+      await activateSecureWalletUpgrade(backupCode);
+      goBackOrWallet();
+    } catch (activationError) {
+      console.warn("[wallet-activation-screen] activate wallet failed", activationError);
+      setError(getWalletActivationUserMessage(activationError));
+    } finally {
+      setIsUpgrading(false);
+    }
   };
 
   const content = (
     <SafeAreaView className="flex-1 bg-app-background">
-      <StandaloneHeader title="Activar cuenta" onBackPress={() => router.back()} />
+      <StandaloneHeader title="Activar cuenta" onBackPress={goBackOrWallet} />
       <View className="flex-1 px-5 pt-8 gap-6">
         <View className="items-center gap-4">
           <View className="w-16 h-16 rounded-full bg-primary/20 items-center justify-center">
@@ -91,7 +105,13 @@ export default function WalletUpgradeScreen() {
               error={error ?? undefined}
             />
 
-            <Button width="w-full" label="Ya guardé mis códigos" onPress={handleConfirm} />
+            <Button
+              width="w-full"
+              label={isUpgrading ? "Activando..." : "Ya guardé mis códigos"}
+              onPress={handleConfirm}
+              disabled={isUpgrading}
+              icon={isUpgrading ? <ActivityIndicator color={Colors.bluePrimary} /> : undefined}
+            />
           </>
         ) : (
           <>

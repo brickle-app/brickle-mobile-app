@@ -7,12 +7,14 @@ import { Button } from "@/src/components/ui/button/Button";
 import { FormField } from "@/src/components/ui/input";
 import StandaloneHeader from "@/src/components/ui/customHeader/standaloneHeder";
 import { restoreWalletBackupToDevice } from "@/src/services/wallet-restore.service";
+import { goBackOrReplace } from "@/src/utils/navigationFallback";
 
 export default function WalletRestoreScreen() {
   const router = useRouter();
   const [recoveryPassword, setRecoveryPassword] = useState("");
   const [isRestoring, setIsRestoring] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const goBackOrWallet = () => goBackOrReplace(router, "/(stack)/(tabs)/wallet");
 
   const handleRestore = async () => {
     if (!recoveryPassword.trim()) {
@@ -24,7 +26,7 @@ export default function WalletRestoreScreen() {
       setError(null);
       setIsRestoring(true);
       await restoreWalletBackupToDevice(recoveryPassword);
-      router.back();
+      goBackOrWallet();
     } catch (restoreError) {
       const message = restoreError instanceof Error ? restoreError.message : "No se pudo restaurar la wallet.";
       setError(message.includes("404") ? "Este usuario no tiene un backup de wallet disponible." : message);
@@ -35,7 +37,7 @@ export default function WalletRestoreScreen() {
 
   const content = (
     <SafeAreaView className="flex-1 bg-app-background">
-      <StandaloneHeader title="Restaurar wallet" onBackPress={() => router.back()} />
+      <StandaloneHeader title="Restaurar wallet" onBackPress={goBackOrWallet} />
       <View className="flex-1 px-5 pt-8 gap-6">
         <View className="items-center gap-4">
           <View className="w-16 h-16 rounded-full bg-primary/20 items-center justify-center">
@@ -45,13 +47,13 @@ export default function WalletRestoreScreen() {
             Recupera la firma de tu wallet
           </Text>
           <Text className="text-text-primary text-sm leading-6 text-center">
-            Tu sesión está activa, pero este dispositivo no tiene la clave local para firmar transacciones. Ingresa tu seed phrase de 12 palabras para restaurar la wallet.
+            Tu sesión está activa, pero este dispositivo no tiene la clave local para firmar transacciones. Ingresa tus códigos de respaldo de 12 palabras para restaurar la wallet.
           </Text>
         </View>
 
         <FormField
           width="w-full"
-          label="Seed phrase"
+          label="Códigos de respaldo"
           placeholder="Escribe las 12 palabras"
           value={recoveryPassword}
           onChangeText={(text) => {
@@ -65,7 +67,7 @@ export default function WalletRestoreScreen() {
 
         <View className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4">
           <Text className="text-yellow-800 text-xs leading-5">
-            Si tu cuenta fue creada antes de activar seed phrases, primero debes actualizar tu wallet desde el flujo obligatorio de compra.
+            Si tu cuenta fue creada antes de activar códigos de respaldo, primero debes actualizar tu wallet desde el flujo obligatorio de compra.
           </Text>
         </View>
 

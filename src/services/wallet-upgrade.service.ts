@@ -41,7 +41,7 @@ function logWalletActivationStage(stage: WalletActivationStage, data?: Record<st
 
 function logWalletActivationFailure(error: WalletActivationError) {
   if (__DEV__) {
-    console.error("[wallet-activation] failed", {
+    console.warn("[wallet-activation] failed", {
       stage: error.stage,
       message: error.message,
       cause: error.cause,
@@ -58,9 +58,12 @@ async function runWalletActivationStage<T>(stage: WalletActivationStage, action:
   }
 }
 
-export async function createSecureWalletUpgrade() {
+export async function generateSecureWalletUpgradeBackupCode() {
+  return runWalletActivationStage("generate-backup-code", () => generateWalletBackupCode());
+}
+
+export async function activateSecureWalletUpgrade(backupCode: string) {
   try {
-    const backupCode = await runWalletActivationStage("generate-backup-code", () => generateWalletBackupCode());
     const wallet = await runWalletActivationStage("derive-wallet", () => ethers.Wallet.fromPhrase(backupCode));
     const backup = await runWalletActivationStage("encrypt-backup", () => createWalletBackupWithBackupCode({
       privateKey: wallet.privateKey,
@@ -80,8 +83,6 @@ export async function createSecureWalletUpgrade() {
 
     return {
       walletAddress: wallet.address,
-      backupCode,
-      privateKey: wallet.privateKey,
     };
   } catch (error) {
     if (error instanceof WalletActivationError) {
