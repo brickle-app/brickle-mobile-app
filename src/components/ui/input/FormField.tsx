@@ -31,6 +31,11 @@ export interface FormFieldProps extends TextInputProps {
   iconPosition?: "left" | "right";
 
   /**
+   * Icon element to show on the right side of the input (e.g., clipboard paste button)
+   */
+  rightIcon?: React.ReactNode;
+
+  /**
    * Error message to display
    */
   error?: string;
@@ -60,6 +65,7 @@ export const FormField = forwardRef<TextInput, FormFieldProps>(
       label,
       description,
       icon,
+      rightIcon,
       mask,
       iconPosition = "left",
       error,
@@ -109,6 +115,9 @@ export const FormField = forwardRef<TextInput, FormFieldProps>(
 
           {icon && iconPosition === "right" && (
             <View className="flex justify-center items-center">{icon}</View>
+          )}
+          {rightIcon && (
+            <View className="flex justify-center items-center">{rightIcon}</View>
           )}
         </View>
 
