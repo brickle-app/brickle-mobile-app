@@ -94,8 +94,10 @@ const DashboardScreen = () => {
     if (user?.email) {
       setIsLoadingAssets(true);
       try {
-        const assets = await getInvestmentsGroupedByCategory(user.email);
-        setSuggestedAssets(assets.slice(0, 6));
+        const allAssets = await getInvestmentsGroupedByCategory(user.email);
+        const ownedLeasingIds = new Set(investments?.map((inv) => inv.leasingId) ?? []);
+        const filteredAssets = allAssets.filter((asset) => !ownedLeasingIds.has(asset.id));
+        setSuggestedAssets(filteredAssets.slice(0, 6));
       } catch (error) {
         logNonCriticalError("Error fetching suggested assets:", error);
       } finally {
@@ -104,7 +106,7 @@ const DashboardScreen = () => {
     } else {
       setIsLoadingAssets(false);
     }
-  }, [user?.email]);
+  }, [user?.email, investments]);
 
   const fetchBalance = useCallback(async () => {
     setIsLoadingBalance(true);

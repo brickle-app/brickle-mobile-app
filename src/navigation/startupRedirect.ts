@@ -45,6 +45,7 @@ export function getStartupRedirectPath({
     path.includes("notifications") ||
     path.includes("onramp") ||
     path.includes("profile") ||
+    path.includes("my-investments") ||
     path.includes("asset-detail") ||
     path.includes("leasing") ||
     path.includes("support") ||

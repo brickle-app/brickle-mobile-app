@@ -101,7 +101,9 @@ export default function MyInvestments() {
     (async () => {
       try {
         const fresh = await getInvestmentForUserLeasing(email, uid, leasingId);
-        if (!cancelled && fresh) setServerInvestment(fresh);
+        if (!cancelled && fresh) {
+          setServerInvestment(fresh);
+        }
       } catch (e) {
         console.warn("refresh investment from API", e);
       }

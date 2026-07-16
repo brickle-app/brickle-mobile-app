@@ -38,7 +38,7 @@ export interface InvestmentOnChainPosition {
 
 /**
  * Capital y bricks visibles al usuario a partir del snapshot on-chain.
- * Si no hay snapshot, conserva comportamiento previo (API estática).
+ * Si no hay snapshot o el balance on-chain es 0, usa datos del servidor como fallback.
  */
 export function computeInvestmentOnChainPosition(
   inv: Investment,
@@ -69,33 +69,35 @@ export function computeInvestmentOnChainPosition(
 
   const balance = snap.leasingTokenBalance;
 
-  const capitalCop =
-    balance === 0n
-      ? 0
-      : isNominalBrickScale
-        ? nominalCapitalCopIntegerFromRaw(balance, asset.pricePerToken ?? 0)
-        : rawBalanceToCapitalCopAmount(balance);
+  const hasOnChainBalance = balance > 0n;
 
-  const bricksLabel =
-    balance === 0n
-      ? "0"
-      : isNominalBrickScale
-        ? formatBricksTokenHuman(balance)
-        : formatCurrentBricks(balance, pricePerBrickMicro);
+  const capitalCop = !hasOnChainBalance
+    ? inv.amount
+    : isNominalBrickScale
+      ? nominalCapitalCopIntegerFromRaw(balance, asset.pricePerToken ?? 0)
+      : rawBalanceToCapitalCopAmount(balance);
+
+  const bricksLabel = !hasOnChainBalance
+    ? String(bricksForInvestment(inv))
+    : isNominalBrickScale
+      ? formatBricksTokenHuman(balance)
+      : formatCurrentBricks(balance, pricePerBrickMicro);
 
   let bricksSortKey = 0;
-  if (balance > 0n) {
+  if (hasOnChainBalance) {
     if (isNominalBrickScale) {
       bricksSortKey = Number(balance) / 1e6;
     } else if (pricePerBrickMicro > 0n) {
       bricksSortKey = Number(balance) / Number(pricePerBrickMicro);
     }
+  } else {
+    bricksSortKey = bricksForInvestment(inv);
   }
 
   return {
     capitalCop,
     bricksLabel,
     bricksSortKey: Number.isFinite(bricksSortKey) ? bricksSortKey : 0,
-    hasOnChainData: true,
+    hasOnChainData: hasOnChainBalance,
   };
 }
