@@ -1,12 +1,17 @@
 import { getWalletBackup, saveWalletBackup, upgradeWalletBackup } from "./wallet-backup.service";
 import { brickleClient } from "@/src/lib/api/axios-brickle.client";
 import { WalletBackupPayload } from "@/src/types/walletBackup.types";
+import { refreshToken } from "./auth.service";
 
 jest.mock("@/src/lib/api/axios-brickle.client", () => ({
   brickleClient: {
     get: jest.fn(),
     post: jest.fn(),
   },
+}));
+
+jest.mock("./auth.service", () => ({
+  refreshToken: jest.fn(),
 }));
 
 const backup: WalletBackupPayload = {
@@ -20,7 +25,7 @@ const backup: WalletBackupPayload = {
 
 describe("wallet backup API service", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   it("saves encrypted wallet backup without plaintext private key fields", async () => {
@@ -50,5 +55,31 @@ describe("wallet backup API service", () => {
     expect(brickleClient.post).toHaveBeenCalledWith("/api/wallet/backup/upgrade", backup);
     expect(JSON.stringify(jest.mocked(brickleClient.post).mock.calls[0][1])).not.toContain("privateKey");
     expect(result).toEqual(backup);
+  });
+
+  it("refreshes the access token and retries wallet upgrade once after a 401", async () => {
+    jest.mocked(brickleClient.post)
+      .mockRejectedValueOnce({ response: { status: 401 } })
+      .mockResolvedValueOnce({ data: backup });
+    jest.mocked(refreshToken).mockResolvedValueOnce({ success: true, newToken: "fresh-token" });
+
+    const result = await upgradeWalletBackup(backup);
+
+    expect(refreshToken).toHaveBeenCalledTimes(1);
+    expect(brickleClient.post).toHaveBeenCalledTimes(2);
+    expect(brickleClient.post).toHaveBeenNthCalledWith(1, "/api/wallet/backup/upgrade", backup);
+    expect(brickleClient.post).toHaveBeenNthCalledWith(2, "/api/wallet/backup/upgrade", backup);
+    expect(result).toEqual(backup);
+  });
+
+  it("does not retry wallet upgrade when token refresh fails", async () => {
+    const unauthorized = { response: { status: 401 } };
+    jest.mocked(brickleClient.post).mockRejectedValueOnce(unauthorized);
+    jest.mocked(refreshToken).mockResolvedValueOnce({ success: false });
+
+    await expect(upgradeWalletBackup(backup)).rejects.toBe(unauthorized);
+
+    expect(refreshToken).toHaveBeenCalledTimes(1);
+    expect(brickleClient.post).toHaveBeenCalledTimes(1);
   });
 });

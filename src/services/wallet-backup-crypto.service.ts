@@ -1,5 +1,9 @@
+import "@/src/utils/crypto-get-random-values";
+import * as ExpoCrypto from "expo-crypto";
 import { ethers } from "ethers";
 import { WalletBackupPayload } from "@/src/types/walletBackup.types";
+
+type RandomBytesSource = (byteCount: number) => Uint8Array;
 
 interface CreateWalletBackupParams {
   privateKey: string;
@@ -23,6 +27,15 @@ function readKeystoreKdfParams(encryptedJson: string) {
   return parsed.crypto?.kdfparams ?? parsed.Crypto?.kdfparams ?? {};
 }
 
+export function createKeystoreEncryptOptions(getRandomBytes: RandomBytesSource = ExpoCrypto.getRandomBytes) {
+  return {
+    iv: getRandomBytes(16),
+    salt: getRandomBytes(32),
+    entropy: getRandomBytes(16),
+    uuid: ethers.hexlify(getRandomBytes(16)),
+  };
+}
+
 export async function createWalletBackup({
   privateKey,
   recoveryPassword,
@@ -33,7 +46,14 @@ export async function createWalletBackup({
     throw new Error("La clave privada no corresponde a la wallet del usuario");
   }
 
-  const encryptedPrivateKey = await wallet.encrypt(recoveryPassword);
+  const encryptedPrivateKey = await ethers.encryptKeystoreJson(
+    {
+      address: wallet.address,
+      privateKey: wallet.privateKey,
+    },
+    recoveryPassword,
+    createKeystoreEncryptOptions()
+  );
 
   return {
     walletAddress,

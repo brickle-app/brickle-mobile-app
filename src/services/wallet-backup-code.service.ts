@@ -1,14 +1,16 @@
+import "@/src/utils/crypto-get-random-values";
+import * as ExpoCrypto from "expo-crypto";
 import { ethers } from "ethers";
+
+type EntropySource = (byteCount: number) => Uint8Array;
 
 export function normalizeWalletBackupCode(backupCode: string) {
   return backupCode.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-export function generateWalletBackupCode() {
-  const phrase = ethers.Wallet.createRandom().mnemonic?.phrase;
-  if (!phrase) {
-    throw new Error("No se pudo generar la seed phrase de la wallet");
-  }
+export function generateWalletBackupCode(getRandomBytes: EntropySource = ExpoCrypto.getRandomBytes) {
+  const entropy = getRandomBytes(16);
+  const phrase = ethers.Mnemonic.fromEntropy(entropy).phrase;
 
   return normalizeWalletBackupCode(phrase);
 }

@@ -1,6 +1,10 @@
 import { ethers } from "ethers";
 import { authStore } from "@/src/store/auth.store";
-import { createSecureWalletUpgrade } from "./wallet-upgrade.service";
+import {
+  createSecureWalletUpgrade,
+  getWalletActivationUserMessage,
+  WalletActivationError,
+} from "./wallet-upgrade.service";
 import { upgradeWalletBackup } from "./wallet-backup.service";
 
 jest.mock("@react-native-async-storage/async-storage", () => ({
@@ -37,4 +41,31 @@ describe("wallet upgrade service", () => {
     expect(authStore.getState().privateKey).toBe(result.privateKey);
     expect(authStore.getState().user?.walletAddress).toBe(result.walletAddress);
   }, 30000);
+
+  it("wraps upload failures with the wallet activation stage", async () => {
+    jest.mocked(upgradeWalletBackup).mockRejectedValueOnce(new Error("Network request failed"));
+
+    await expect(createSecureWalletUpgrade()).rejects.toMatchObject({
+      name: "WalletActivationError",
+      stage: "upload-backup",
+      message: "No se pudo activar tu cuenta en este paso: upload-backup. Network request failed",
+    });
+  }, 30000);
+
+  it("exposes the original error through WalletActivationError", () => {
+    const cause = new Error("Missing crypto.getRandomValues");
+    const error = new WalletActivationError("generate-backup-code", cause);
+
+    expect(error.stage).toBe("generate-backup-code");
+    expect(error.cause).toBe(cause);
+    expect(error.message).toContain("Missing crypto.getRandomValues");
+  });
+
+  it("returns the staged activation error message in dev", () => {
+    const error = new WalletActivationError("encrypt-backup", new Error("Cannot read property randomBytes"));
+
+    expect(getWalletActivationUserMessage(error)).toBe(
+      "No se pudo activar tu cuenta en este paso: encrypt-backup. Cannot read property randomBytes"
+    );
+  });
 });

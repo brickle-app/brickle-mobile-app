@@ -1,4 +1,5 @@
 import {
+  createKeystoreEncryptOptions,
   createWalletBackup,
   createWalletBackupWithBackupCode,
   restorePrivateKeyFromBackup,
@@ -8,6 +9,16 @@ const privateKey = "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789
 const walletAddress = "0xFCAd0B19bB29D4674531d6f115237E16AfCE377c";
 
 describe("wallet backup crypto service", () => {
+  it("creates keystore encryption options from injected random bytes", () => {
+    let value = 0;
+    const options = createKeystoreEncryptOptions((byteCount) => new Uint8Array(byteCount).fill(++value));
+
+    expect(Array.from(options.iv as Uint8Array)).toEqual(new Array(16).fill(1));
+    expect(Array.from(options.salt as Uint8Array)).toEqual(new Array(32).fill(2));
+    expect(Array.from(options.entropy as Uint8Array)).toEqual(new Array(16).fill(3));
+    expect(options.uuid).toBe("0x04040404040404040404040404040404");
+  });
+
   it("creates an encrypted backup and restores the original private key locally", async () => {
     const backup = await createWalletBackup({
       privateKey,

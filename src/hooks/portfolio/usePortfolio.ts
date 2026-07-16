@@ -1,6 +1,7 @@
 import { PortfolioChartDto } from "@/src/interfaces/investments.interface";
 import { getPortfolioByUserId } from "@/src/services/brickle.service";
 import { authStore } from "@/src/store/auth.store";
+import { logNonCriticalError } from "@/src/utils/nonCriticalErrorLogger";
 import { useEffect, useState, useMemo, useCallback } from "react";
 
 interface ParsedChartData {
@@ -56,8 +57,8 @@ export const usePortfolio = () => {
           setRoi(data.roi);
         }
       } catch (error) {
-        // Service already handles session errors, just log here
-        console.error("Error fetching portfolio:", error);
+        // Dashboard can render with empty portfolio data when this optional request times out.
+        logNonCriticalError("Error fetching portfolio:", error);
       } finally {
         setIsLoading(false);
       }

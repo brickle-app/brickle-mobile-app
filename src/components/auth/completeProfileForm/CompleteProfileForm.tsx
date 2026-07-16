@@ -19,6 +19,13 @@ import { DocumentTypeEnum } from "@/src/types/user.types";
 
 const CompleteProfileForm = () => {
   const router = useRouter();
+  const goBackOrDashboard = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace("/(stack)/(tabs)/dashboard");
+  };
   const {
     currentStep,
     totalSteps,
@@ -44,7 +51,7 @@ const CompleteProfileForm = () => {
         showsVerticalScrollIndicator={false}
       >
         <View className="flex-row justify-start items-start w-full px-6">
-          <TouchableOpacity className="flex-row items-center justify-center gap-2" onPress={() => router.back()}>
+          <TouchableOpacity className="flex-row items-center justify-center gap-2" onPress={goBackOrDashboard}>
             <Ionicons
               name="arrow-back-circle"
               size={28}

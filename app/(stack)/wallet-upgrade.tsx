@@ -6,7 +6,10 @@ import { Colors } from "@/assets/Colors";
 import { Button } from "@/src/components/ui/button/Button";
 import { FormField } from "@/src/components/ui/input";
 import StandaloneHeader from "@/src/components/ui/customHeader/standaloneHeder";
-import { createSecureWalletUpgrade } from "@/src/services/wallet-upgrade.service";
+import {
+  createSecureWalletUpgrade,
+  getWalletActivationUserMessage,
+} from "@/src/services/wallet-upgrade.service";
 import { normalizeWalletBackupCode } from "@/src/services/wallet-backup-code.service";
 
 export default function WalletUpgradeScreen() {
@@ -22,8 +25,9 @@ export default function WalletUpgradeScreen() {
       setIsUpgrading(true);
       const result = await createSecureWalletUpgrade();
       setBackupCode(result.backupCode);
-    } catch {
-      setError("No se pudo actualizar la wallet. Intenta de nuevo.");
+    } catch (activationError) {
+      console.error("[wallet-activation-screen] create wallet failed", activationError);
+      setError(getWalletActivationUserMessage(activationError));
     } finally {
       setIsUpgrading(false);
     }
@@ -33,7 +37,7 @@ export default function WalletUpgradeScreen() {
     if (!backupCode) return;
 
     if (normalizeWalletBackupCode(confirmation) !== backupCode) {
-      setError("La seed phrase no coincide. Escribe las 12 palabras en el mismo orden.");
+      setError("Los códigos no coinciden. Escríbelos en el mismo orden.");
       return;
     }
 
@@ -42,17 +46,17 @@ export default function WalletUpgradeScreen() {
 
   const content = (
     <SafeAreaView className="flex-1 bg-app-background">
-      <StandaloneHeader title="Actualizar wallet" onBackPress={() => router.back()} />
+      <StandaloneHeader title="Activar cuenta" onBackPress={() => router.back()} />
       <View className="flex-1 px-5 pt-8 gap-6">
         <View className="items-center gap-4">
           <View className="w-16 h-16 rounded-full bg-primary/20 items-center justify-center">
             <Ionicons name="key-outline" size={34} color={Colors.bluePrimary} />
           </View>
           <Text className="text-blue-primary font-libre-bold text-2xl text-center">
-            Protege tu wallet
+            Crea tus códigos de respaldo
           </Text>
           <Text className="text-text-primary text-sm leading-6 text-center">
-            Para comprar debes usar una wallet con seed phrase. Estas 12 palabras son la única forma segura de recuperar tu wallet en otro dispositivo.
+            Estos códigos son 12 palabras privadas. Te permiten recuperar el acceso a tus transacciones si cambias de celular o reinstalas la app.
           </Text>
         </View>
 
@@ -60,7 +64,7 @@ export default function WalletUpgradeScreen() {
           <>
             <View className="bg-white border border-blue-primary/20 rounded-2xl p-4 gap-2">
               <Text className="text-text-primary text-xs font-semibold uppercase tracking-widest text-center">
-                Tu seed phrase
+                Tus códigos de respaldo
               </Text>
               <Text selectable className="text-blue-primary font-libre-bold text-xl leading-8 text-center">
                 {backupCode}
@@ -69,14 +73,14 @@ export default function WalletUpgradeScreen() {
 
             <View className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4">
               <Text className="text-yellow-800 text-xs leading-5">
-                Guarda estas 12 palabras fuera de la app. Brickle no puede verlas ni recuperarlas por ti.
+                Brickle no puede ver ni recuperar estos códigos. Guárdalos en un lugar seguro.
               </Text>
             </View>
 
             <FormField
               width="w-full"
-              label="Confirmar seed phrase"
-              placeholder="Escribe las 12 palabras"
+              label="Confirma tus códigos de respaldo"
+              placeholder="Escribe las 12 palabras en orden"
               value={confirmation}
               onChangeText={(text) => {
                 setConfirmation(text.toLowerCase());
@@ -87,14 +91,14 @@ export default function WalletUpgradeScreen() {
               error={error ?? undefined}
             />
 
-            <Button width="w-full" label="Ya guardé mi seed phrase" onPress={handleConfirm} />
+            <Button width="w-full" label="Ya guardé mis códigos" onPress={handleConfirm} />
           </>
         ) : (
           <>
             {error ? <Text className="text-red-600 text-sm text-center">{error}</Text> : null}
             <Button
               width="w-full"
-              label={isUpgrading ? "Actualizando..." : "Generar wallet segura"}
+              label={isUpgrading ? "Activando..." : "Generar códigos de respaldo"}
               onPress={handleCreateWallet}
               disabled={isUpgrading}
               icon={isUpgrading ? <ActivityIndicator color={Colors.bluePrimary} /> : undefined}

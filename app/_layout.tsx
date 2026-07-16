@@ -1,3 +1,4 @@
+import "@/src/utils/crypto-get-random-values";
 import React, { useEffect, useState } from "react";
 import { Slot, useRouter, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";

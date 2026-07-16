@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useState, useMemo } from "react";
+import React, { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { ScrollView, Text, View, RefreshControl, Pressable, Platform, StyleSheet } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { DashboardHeader } from "@/src/components/dashboard/dashboard-header/DashboardHeader";
 import { SubscriptionBanner } from "@/src/components/ui/subscription-banner/SubscriptionBanner";
@@ -12,9 +13,9 @@ import { loadRecentSearches } from "@/src/store/search.store";
 import { useOnRefreshTriggerIncrement } from "@/src/hooks/useOnRefreshTriggerIncrement";
 import { usePullToRefresh } from "@/src/hooks/usePullToRefresh";
 import { Asset } from "@/src/interfaces/investments.interface";
-import { getInvestmentsGroupedByCategory } from "@/src/services/brickle.service";
+import { BrickleService, getInvestmentsGroupedByCategory } from "@/src/services/brickle.service";
 import { authStore } from "@/src/store/auth.store";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { DashboardHeaderSkeleton, AssetsSuggestCarouselSkeleton } from "@/src/components/ui/skeleton";
 import { useDashboardInvestments } from "@/src/hooks/dashboard/useDashboardInvestments";
 import { useInvestmentsOnChainSnapshots } from "@/src/hooks/dashboard/useInvestmentsOnChainSnapshots";
@@ -28,12 +29,15 @@ import { formatCurrency, parseCopAmountFromText } from "@/src/utils/formatCurren
 import { Colors } from "@/assets/Colors";
 import { ProfileDocumentCta } from "@/src/components/dashboard/ProfileDocumentCta";
 import { needsIdentityDocument } from "@/src/utils/profileVerification";
+import { refreshAuthenticatedUser } from "@/src/services/refresh-authenticated-user";
 
 /** Espacio bajo el scroll cuando el anuncio flotante está visible (~altura tarjeta + respiro). */
 const CLAIM_BANNER_SCROLL_PADDING = 100;
 
 const DashboardScreen = () => {
   const router = useRouter();
+  const { openDocumentUpload } = useLocalSearchParams<{ openDocumentUpload?: string }>();
+  const didOpenDocumentUploadFromRoute = useRef(false);
   const { balance, refreshBalance } = useUserBalance();
   const {
     isModalVisible,
@@ -43,7 +47,11 @@ const DashboardScreen = () => {
     handleCloseModal,
   } = useDashboard();
   const user = authStore((state) => state.user);
+  const setUser = authStore((state) => state.setUser);
   const shouldShowDocumentCta = needsIdentityDocument(user);
+  const shouldShowWalletActivationCta = Boolean(
+    user?.isFullProfileComplete && !user.isProfileUnderReview && !user.walletAddress
+  );
   const [suggestedAssets, setSuggestedAssets] = useState<Asset[] | null>(null);
   const [isLoadingAssets, setIsLoadingAssets] = useState(true);
   const [isLoadingBalance, setIsLoadingBalance] = useState(true);
@@ -132,6 +140,23 @@ const DashboardScreen = () => {
     ]);
   }, [fetchBalance, fetchSuggestedAssets]);
 
+  useEffect(() => {
+    if (openDocumentUpload !== "1" || didOpenDocumentUploadFromRoute.current) return;
+    didOpenDocumentUploadFromRoute.current = true;
+    handleUploadDocument();
+    router.setParams({ openDocumentUpload: undefined });
+  }, [handleUploadDocument, openDocumentUpload, router]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void refreshAuthenticatedUser({
+        email: user?.email,
+        getUserByEmail: BrickleService.getUserByEmail,
+        setUser,
+      });
+    }, [setUser, user?.email])
+  );
+
   const handleAssetPress = (asset: Asset) => {
     router.push(`/(stack)/asset-detail/${asset.id}?source=dashboard` as import("expo-router").Href);
   };
@@ -195,6 +220,25 @@ const DashboardScreen = () => {
 
           {shouldShowDocumentCta && (
             <ProfileDocumentCta onPress={handleUploadDocument} />
+          )}
+
+          {shouldShowWalletActivationCta && (
+            <View className="w-full rounded-2xl border border-blue-primary/15 bg-white p-4">
+              <Text className="font-libre-bold text-base text-blue-primary">
+                Activa tu cuenta para transacciones
+              </Text>
+              <Text className="mt-2 font-libre-regular text-xs leading-5 text-gray-600">
+                Crea tus códigos de respaldo para poder recargar y retirar de forma segura.
+              </Text>
+              <Pressable
+                className="mt-4 rounded-full bg-primary px-4 py-3"
+                onPress={() => router.push("/wallet-upgrade")}
+              >
+                <Text className="text-center font-libre-bold text-blue-primary">
+                  Activar mi cuenta
+                </Text>
+              </Pressable>
+            </View>
           )}
 
           <SubscriptionBanner

@@ -162,7 +162,11 @@ export function useCompleteProfileForm() {
           [
             {
               text: "Agregar documentos",
-              onPress: () => router.back(),
+              onPress: () =>
+                router.replace({
+                  pathname: "/(stack)/(tabs)/dashboard",
+                  params: { openDocumentUpload: "1" },
+                }),
             },
           ]
         );
