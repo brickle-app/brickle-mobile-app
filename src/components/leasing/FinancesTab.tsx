@@ -4,7 +4,7 @@ import { PerformanceMetrics } from "./PerformanceMetrics";
 //import { AmortizationChart } from "./AmortizationChart";
 import { Asset } from "@/src/interfaces/investments.interface";
 import { getLiquidity, LiquidityLevel } from "@/src/utils/liquidity";
-import { getRiskLevel } from "@/src/utils/riskLevel";
+import { getAssetRiskLevel } from "@/src/utils/assetRiskLevel";
 
 interface FinancesTabProps {
   asset: Asset;
@@ -19,7 +19,7 @@ export const FinancesTab = ({ asset, theme }: FinancesTabProps) => {
     <View>
       <PerformanceMetrics metrics={{
         annualRate: asset.tir || 0,
-        riskLevel: getRiskLevel(asset.agreement?.riskLevel || 0),
+        riskLevel: getAssetRiskLevel(asset),
         riskPercentage: asset.agreement?.riskRate || 0,
         contractPeriod: asset.contractTime.toString(),
         totalReturn: asset.price.toString(),

@@ -3,7 +3,7 @@ import React, { useRef, useEffect, useState, useCallback } from "react";
 import PagerView from "react-native-pager-view";
 import TrendingAssetCard from "./TrendingAssetCard";
 import { Asset } from "@/src/interfaces/investments.interface";
-import { getRiskLevel } from "@/src/utils/riskLevel";
+import { getAssetRiskLevel } from "@/src/utils/assetRiskLevel";
 import { Colors } from "@/assets/Colors";
 
 interface TrendingCarouselProps {
@@ -63,7 +63,7 @@ const TrendingCarousel = ({ assets = [], onAssetPress }: TrendingCarouselProps) 
                 name={asset.name}
                 price={asset.pricePerToken}
                 bidsAvailable={asset.tokensAvailable}
-                riskLevel={getRiskLevel(asset.agreement?.riskLevel || 1)}
+                riskLevel={getAssetRiskLevel(asset)}
                 roi={asset.tir?.toString() || "0"}
                 imageUrl={asset.coverImageUrl || ""}
                 miniatureImageUrl={asset.miniatureImageUrl}

@@ -3,7 +3,7 @@ import { Text, View } from "react-native";
 import TrendingAssetCard from "./TrendingAssetCard";
 import { TrendingAssetCardSkeleton } from "@/src/components/ui/skeleton";
 import { Asset } from "@/src/interfaces/investments.interface";
-import { getRiskLevel } from "@/src/utils/riskLevel";
+import { getAssetRiskLevel } from "@/src/utils/assetRiskLevel";
 
 interface DiscoverAssetCardListProps {
   assets: Asset[];
@@ -39,7 +39,7 @@ export const DiscoverAssetCardList = ({ assets, loading = false, onAssetPress }:
           name={asset.name}
           price={asset.pricePerToken}
           bidsAvailable={asset.tokensAvailable}
-          riskLevel={getRiskLevel(asset.agreement?.riskLevel || 1)}
+          riskLevel={getAssetRiskLevel(asset)}
           roi={asset.tir?.toString() || "0"}
           imageUrl={asset.coverImageUrl || ""}
           miniatureImageUrl={asset.miniatureImageUrl}

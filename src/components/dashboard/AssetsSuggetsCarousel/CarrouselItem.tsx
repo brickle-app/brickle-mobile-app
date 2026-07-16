@@ -3,7 +3,7 @@ import React from "react";
 import { Asset } from "@/src/interfaces/investments.interface";
 import { getCategory, getCategoryBgColor } from "@/src/utils/categories";
 import CATEGORIES from "@/src/utils/categories";
-import { getRiskLevel } from "@/src/utils/riskLevel";
+import { getAssetRiskLevel } from "@/src/utils/assetRiskLevel";
 import { RiskLevelInline } from "@/src/components/ui/risk-level/AssetRiskLevel";
 import { Colors } from "@/assets/Colors";
 import {
@@ -54,9 +54,7 @@ const CarrouselItem = ({
   const textBlockHeight = cardSize - imageHeight;
 
   const displayTitle = sanitizeSuggestedAssetTitle(asset?.name || title);
-  const riskLevel = asset?.agreement?.riskLevel != null
-    ? getRiskLevel(asset.agreement.riskLevel)
-    : { level: "Medio", color: Colors.orangePrimary };
+  const riskLevel = getAssetRiskLevel(asset);
   const displayRoi = asset?.tir != null ? `${asset.tir}% E.A.` : roi || "0% E.A.";
   const displayImage = displayMiniature ? asset?.miniatureImageUrl : asset?.coverImageUrl || image;
   const overlayColor = asset?.type ? categoryColor(asset.type) : Colors.violetTertiary;
