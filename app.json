@@ -6,7 +6,10 @@
     "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/splash-icon.png",
-    "scheme": "brickle",
+    "scheme": [
+      "brickle",
+      "com.googleusercontent.apps.611045847930-ndmsssr9tal67bp68mf6d994eqe7gm6b"
+    ],
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {

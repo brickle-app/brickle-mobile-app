@@ -2,6 +2,7 @@ import "@/src/utils/crypto-get-random-values";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 import { useCallback, useEffect, useState } from "react";
+import { Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { authStore } from "../store/auth.store";
 import { startInactivityTimer, startTokenExpirationMonitoring } from "../utils/sessionManager";
@@ -14,7 +15,6 @@ const REFRESH_TOKEN_STORAGE_KEY = "brickle_refresh_token";
 
 const BRICKLE_API_URL = process.env.EXPO_PUBLIC_BRICKLE_API_URL;
 const MISSING_GOOGLE_CLIENT_ID = "missing-google-client-id";
-const GOOGLE_EXPO_PROXY_REDIRECT_URI = "https://auth.expo.io/@pivelcode/brickle";
 
 function configuredClientId(clientId: string | undefined) {
   return clientId?.trim() || undefined;
@@ -23,14 +23,26 @@ function configuredClientId(clientId: string | undefined) {
 export function buildGoogleAuthRequestConfig(
   env: Partial<Record<string, string | undefined>> = process.env,
   _createRedirectUri?: unknown,
-  _platform?: string
+  platform: string = Platform.OS
 ) {
   const webClientId = configuredClientId(env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID) ?? MISSING_GOOGLE_CLIENT_ID;
+  const iosClientId = configuredClientId(env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID) ?? MISSING_GOOGLE_CLIENT_ID;
+  const androidClientId = configuredClientId(env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID);
+  const clientId = platform === "ios"
+    ? iosClientId
+    : platform === "android"
+      ? androidClientId ?? webClientId
+      : webClientId;
+  const redirectUri = platform === "ios" && iosClientId !== MISSING_GOOGLE_CLIENT_ID
+    ? `com.googleusercontent.apps.${iosClientId.replace(/\.apps\.googleusercontent\.com$/, "")}:/oauthredirect`
+    : undefined;
 
   return {
-    clientId: webClientId,
+    clientId,
     webClientId,
-    redirectUri: GOOGLE_EXPO_PROXY_REDIRECT_URI,
+    iosClientId,
+    androidClientId,
+    redirectUri,
   };
 }
 
@@ -57,8 +69,15 @@ export function getGoogleAuthResultStatus(result: any): GoogleAuthResultStatus {
 
 export function getGoogleAuthBackendClientId(
   env: Partial<Record<string, string | undefined>> = process.env,
-  _platform?: string
+  platform: string = Platform.OS
 ) {
+  if (platform === "ios") {
+    return configuredClientId(env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID);
+  }
+  if (platform === "android") {
+    return configuredClientId(env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID)
+      ?? configuredClientId(env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID);
+  }
   return configuredClientId(env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID);
 }
 
@@ -152,7 +171,7 @@ export const useGoogleAuth = () => {
     const res = await fetch(`${BRICKLE_API_URL}/api/auth/google`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken, clientId: getGoogleAuthBackendClientId() }),
+      body: JSON.stringify({ idToken, clientId: getGoogleAuthBackendClientId(process.env, Platform.OS) }),
     });
     console.log("[GoogleAuth] Backend response status:", res.status);
 
