@@ -1,8 +1,10 @@
 import {
   formatDateForDisplay,
   getAdultMaximumDate,
+  getDaysInMonth,
   isAdultDisplayDate,
   parseDisplayDate,
+  updateDatePart,
 } from "./datePicker";
 
 describe("datePicker helpers", () => {
@@ -28,5 +30,35 @@ describe("datePicker helpers", () => {
 
     expect(isAdultDisplayDate("21/06/2008", today)).toBe(true);
     expect(isAdultDisplayDate("22/06/2008", today)).toBe(false);
+  });
+
+  it("returns the number of days in the selected month", () => {
+    expect(getDaysInMonth(2024, 1)).toBe(29);
+    expect(getDaysInMonth(2023, 1)).toBe(28);
+  });
+
+  it("clamps the day when changing to a shorter month", () => {
+    const result = updateDatePart(
+      new Date(2000, 0, 31),
+      "month",
+      1,
+      new Date(1900, 0, 1),
+      new Date(2008, 6, 16)
+    );
+
+    expect(formatDateForDisplay(result)).toBe("29/02/2000");
+  });
+
+  it("keeps picker changes inside the birth-date range", () => {
+    const maximumDate = new Date(2008, 6, 16);
+    const result = updateDatePart(
+      new Date(2007, 11, 31),
+      "year",
+      2008,
+      new Date(1900, 0, 1),
+      maximumDate
+    );
+
+    expect(result).toEqual(maximumDate);
   });
 });

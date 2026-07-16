@@ -1,13 +1,11 @@
 import React, { useState } from "react";
-import { Platform, Pressable, Text, View } from "react-native";
-import DateTimePicker, {
-  DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
+import { Pressable, Text, View } from "react-native";
 import {
   formatDateForDisplay,
   getAdultMaximumDate,
   parseDisplayDate,
 } from "@/src/utils/datePicker";
+import { DatePickerBottomSheet } from "./DatePickerBottomSheet";
 
 interface DatePickerFieldProps {
   label?: string;
@@ -38,26 +36,23 @@ export function DatePickerField({
 }: DatePickerFieldProps) {
   const [isPickerVisible, setIsPickerVisible] = useState(false);
   const maximumDate = getAdultMaximumDate();
-  const selectedDate = parseDisplayDate(value) ?? maximumDate;
+  const [draftDate, setDraftDate] = useState(
+    () => parseDisplayDate(value) ?? maximumDate
+  );
 
-  const handleChange = (event: DateTimePickerEvent, date?: Date) => {
-    if (Platform.OS === "android") {
-      setIsPickerVisible(false);
-    }
+  const handleOpen = () => {
+    setDraftDate(parseDisplayDate(value) ?? maximumDate);
+    setIsPickerVisible(true);
+  };
 
-    if (event.type === "dismissed") {
-      onBlur?.();
-      return;
-    }
+  const handleCancel = () => {
+    setIsPickerVisible(false);
+  };
 
-    if (!date) return;
-
-    onChangeText(formatDateForDisplay(date));
+  const handleConfirm = () => {
+    onChangeText(formatDateForDisplay(draftDate));
     onBlur?.();
-
-    if (Platform.OS === "ios") {
-      setIsPickerVisible(false);
-    }
+    setIsPickerVisible(false);
   };
 
   return (
@@ -68,7 +63,7 @@ export function DatePickerField({
 
       <Pressable
         accessibilityRole="button"
-        onPress={() => setIsPickerVisible(true)}
+        onPress={handleOpen}
         className={`flex border h-primary-height ${width} py-1 px-6 border-secondary border-1 rounded-primary-radius flex-row items-center gap-2 ${
           error ? "border-red-600" : ""
         } ${inputWrapperClassName}`}
@@ -79,16 +74,16 @@ export function DatePickerField({
         </Text>
       </Pressable>
 
-      {isPickerVisible ? (
-        <DateTimePicker
-          value={selectedDate}
-          mode="date"
-          display={Platform.OS === "ios" ? "compact" : "default"}
-          minimumDate={MINIMUM_BIRTH_DATE}
-          maximumDate={maximumDate}
-          onChange={handleChange}
-        />
-      ) : null}
+      <DatePickerBottomSheet
+        visible={isPickerVisible}
+        title={label}
+        value={draftDate}
+        minimumDate={MINIMUM_BIRTH_DATE}
+        maximumDate={maximumDate}
+        onChange={setDraftDate}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
 
       {error ? (
         <Text

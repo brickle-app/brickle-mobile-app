@@ -40,3 +40,28 @@ export function isAdultDisplayDate(value: string, today = new Date()): boolean {
 
   return date <= getAdultMaximumDate(today);
 }
+
+export type DatePart = "day" | "month" | "year";
+
+export function getDaysInMonth(year: number, month: number): number {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+export function updateDatePart(
+  date: Date,
+  part: DatePart,
+  value: number,
+  minimumDate: Date,
+  maximumDate: Date
+): Date {
+  const year = part === "year" ? value : date.getFullYear();
+  const month = part === "month" ? value : date.getMonth();
+  const requestedDay = part === "day" ? value : date.getDate();
+  const day = Math.min(requestedDay, getDaysInMonth(year, month));
+  const nextDate = new Date(year, month, day);
+
+  if (nextDate < minimumDate) return new Date(minimumDate);
+  if (nextDate > maximumDate) return new Date(maximumDate);
+
+  return nextDate;
+}
