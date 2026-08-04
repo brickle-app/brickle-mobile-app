@@ -8,13 +8,12 @@ import { AddAccountModal } from '@/src/components/wallet/modals/AddAccountModal'
 import { DeleteConfirmationModal } from '@/src/components/wallet/modals/DeleteConfirmationModal';
 import { GetUserAccounts } from '@/src/types/user-account';
 import { getAllBankAccounts, deleteBankAccount } from '@/src/services/account.service';
-import { authStore } from '@/src/store/auth.store';
+import { authStore, persistPrivateKeyToSecureStore, loadPrivateKeyFromSecureStore } from '@/src/store/auth.store';
 import { useBlockchainConfigStore } from '@/src/store/blockchainConfig.store';
 import OperationStatusModal from '../OperationStatusModal';
 import { formatColombianPesos, parseCopAmountFromText } from '@/src/utils/formatCurrency';
 import { Alert } from 'react-native';
 import { withdrawAccount } from '@/src/services/finance.service';
-import { getPrivateKey } from '@/src/services/auth.service';
 
 import { LeasingTokenService } from '@/src/components/wallet/contracts/services/leasing-token.service';
 
@@ -141,7 +140,7 @@ export const WithdrawForm = ({ setIsModalVisible }: { setIsModalVisible: (visibl
       /** Clave en store o recuperada del almacenamiento seguro local. */
       let signingKey = authStore.getState().privateKey;
       if (!signingKey) {
-        signingKey = await getPrivateKey();
+        signingKey = await loadPrivateKeyFromSecureStore();
         if (signingKey) {
           authStore.getState().setPrivateKey(signingKey);
         }

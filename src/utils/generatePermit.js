@@ -1,4 +1,5 @@
 import { authStore } from "../store/auth.store";
+import { getPrivateKey } from "../services/auth.service";
 import { provider } from "../components/wallet/contracts/config/clients/polygon";
 const { ethers } = require("ethers");
 
@@ -9,10 +10,13 @@ export async function generatePermit(
   amount,
   options = {}
 ) {
-  const privateKey = authStore.getState().privateKey;
+  let privateKey = authStore.getState().privateKey;
+  if (!privateKey) {
+    privateKey = await getPrivateKey();
+  }
 
   if (!privateKey) {
-    throw new Error("Private key not found in auth store");
+    throw new Error("Private key not found in auth store or SecureStore");
   }
 
   try {

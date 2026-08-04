@@ -10,6 +10,39 @@ import { searchStore } from "./search.store";
 const PRIVATE_KEY_STORAGE_KEY = "brickle_private_key";
 const REFRESH_TOKEN_STORAGE_KEY = "brickle_refresh_token";
 
+export async function persistPrivateKeyToSecureStore(privateKey: string): Promise<void> {
+  try {
+    await SecureStore.setItemAsync(PRIVATE_KEY_STORAGE_KEY, privateKey);
+    console.log("✅ Private key persisted to SecureStore");
+  } catch (error) {
+    console.error("❌ Error persisting private key to SecureStore:", error);
+  }
+}
+
+export async function loadPrivateKeyFromSecureStore(): Promise<string | null> {
+  try {
+    const privateKey = await SecureStore.getItemAsync(PRIVATE_KEY_STORAGE_KEY);
+    if (privateKey) {
+      console.log("✅ Private key loaded from SecureStore");
+    } else {
+      console.log("ℹ️ No private key found in SecureStore");
+    }
+    return privateKey;
+  } catch (error) {
+    console.error("❌ Error loading private key from SecureStore:", error);
+    return null;
+  }
+}
+
+export async function clearPrivateKeyFromSecureStore(): Promise<void> {
+  try {
+    await SecureStore.deleteItemAsync(PRIVATE_KEY_STORAGE_KEY);
+    console.log("✅ Private key cleared from SecureStore");
+  } catch (error) {
+    console.error("❌ Error clearing private key from SecureStore:", error);
+  }
+}
+
 interface State {
   token: string | null;
   user: PartialBrickleUser | null;
@@ -125,7 +158,10 @@ export const authStore = create<State>()(
           set({ error: "Failed to set private key" });
         }
       },
-      clearPrivateKey: () => set({ privateKey: null }),
+      clearPrivateKey: () => {
+    set({ privateKey: null });
+    clearPrivateKeyFromSecureStore();
+  },
       setTokenExpiration: (tokenExpiration: number) => {
         try {
           set({ tokenExpiration });

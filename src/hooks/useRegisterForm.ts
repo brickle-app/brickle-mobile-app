@@ -5,7 +5,7 @@ import { BrickleService } from "@/src/services/brickle.service";
 import { ethers } from "ethers";
 import uuid from "react-native-uuid";
 
-import { authStore } from "@/src/store/auth.store";
+import { authStore, persistPrivateKeyToSecureStore } from "@/src/store/auth.store";
 import { usePinStore } from "@/src/store/pin.store";
 import { createAndSaveWalletBackup } from "@/src/services/wallet-backup-registration.service";
 import { generateWalletBackupCode, normalizeWalletBackupCode } from "@/src/services/wallet-backup-code.service";
@@ -146,6 +146,7 @@ export const useRegisterForm = () => {
       const walletAddress = wallet.address;
 
       authStore.getState().setPrivateKey(privateKey);
+      await persistPrivateKeyToSecureStore(privateKey);
 
       // Step 3: Create user in Brickle database
       const brickle = new BrickleService();

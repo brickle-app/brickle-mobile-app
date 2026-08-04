@@ -4,7 +4,7 @@ import * as WebBrowser from "expo-web-browser";
 import { useCallback, useEffect, useState } from "react";
 import { Platform } from "react-native";
 import { useRouter } from "expo-router";
-import { authStore } from "../store/auth.store";
+import { authStore, persistPrivateKeyToSecureStore, loadPrivateKeyFromSecureStore } from "../store/auth.store";
 import { startInactivityTimer, startTokenExpirationMonitoring } from "../utils/sessionManager";
 import * as SecureStore from "expo-secure-store";
 import { ethers } from "ethers";
@@ -139,6 +139,7 @@ export async function createLocalWallet() {
   const walletAddress = wallet.address;
 
   authStore.getState().setPrivateKey(privateKey);
+  await persistPrivateKeyToSecureStore(privateKey);
 
   return { walletAddress, privateKey };
 }
@@ -146,6 +147,12 @@ export async function createLocalWallet() {
 export async function getPrivateKey(): Promise<string | null> {
   const storedKey = authStore.getState().privateKey;
   if (storedKey) return storedKey;
+
+  const secureKey = await loadPrivateKeyFromSecureStore();
+  if (secureKey) {
+    authStore.getState().setPrivateKey(secureKey);
+    return secureKey;
+  }
 
   return null;
 }
@@ -415,6 +422,7 @@ export const useCreateUserWallet = () => {
     const walletAddress = wallet.address;
 
     authStore.getState().setPrivateKey(privateKey);
+    await persistPrivateKeyToSecureStore(privateKey);
 
     return {
       id: `local-${userId}`,
@@ -465,5 +473,14 @@ export const refreshToken = async (): Promise<{ success: boolean; newToken?: str
 
 export const restoreSessionFromRefreshToken = async (): Promise<boolean> => {
   const refreshResult = await refreshToken();
-  return refreshResult.success;
+  if (!refreshResult.success) {
+    return false;
+  }
+
+  const privateKey = await loadPrivateKeyFromSecureStore();
+  if (privateKey) {
+    authStore.getState().setPrivateKey(privateKey);
+  }
+
+  return true;
 };

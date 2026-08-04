@@ -1,6 +1,6 @@
 import "@/src/utils/crypto-get-random-values";
 import { ethers } from "ethers";
-import { authStore } from "@/src/store/auth.store";
+import { authStore, persistPrivateKeyToSecureStore } from "@/src/store/auth.store";
 import { generateWalletBackupCode } from "./wallet-backup-code.service";
 import { createWalletBackupWithBackupCode } from "./wallet-backup-crypto.service";
 import { upgradeWalletBackup } from "./wallet-backup.service";
@@ -73,9 +73,10 @@ export async function activateSecureWalletUpgrade(backupCode: string) {
 
     await runWalletActivationStage("upload-backup", () => upgradeWalletBackup(backup));
 
-    await runWalletActivationStage("update-local-session", () => {
+    await runWalletActivationStage("update-local-session", async () => {
       const state = authStore.getState();
       state.setPrivateKey(wallet.privateKey);
+      await persistPrivateKeyToSecureStore(wallet.privateKey);
       if (state.user) {
         state.setUser({ ...state.user, walletAddress: wallet.address });
       }
