@@ -58,10 +58,12 @@ export default function WalletRestoreScreen() {
     setIsPasteLoading(true);
     try {
       const text = await Clipboard.getStringAsync();
-      if (text.trim()) {
+      if (text && text.trim()) {
         setRecoveryPassword(text.trim());
         if (error) setError(null);
       }
+    } catch (clipboardError) {
+      console.warn("Clipboard read error (may contain image):", clipboardError);
     } finally {
       setIsPasteLoading(false);
     }
