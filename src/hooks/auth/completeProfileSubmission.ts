@@ -23,6 +23,12 @@ export function buildCompleteProfileUpdate(
     documentNumber: formData.documentNumber,
     isBasicProfileComplete: true,
     isProfileUnderReview: false,
-    termsAccepted: true,
+    // Consentimiento explícito capturado en el paso 3 del formulario: Términos y
+    // condiciones, Contrato de colaboración empresarial y Declaración de origen de
+    // fondos deben haberse aceptado (validado por `consentSchema`) antes de llegar aquí.
+    termsAccepted:
+      formData.acceptsTermsAndConditions &&
+      formData.acceptsBusinessCollaborationContract &&
+      formData.acceptsOriginOfFundsDeclaration,
   };
 }

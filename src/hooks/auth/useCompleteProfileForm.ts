@@ -22,6 +22,9 @@ const initialFormData: CompleteProfileFormData = {
   residenceCountry: "CO", // Colombia is the only supported residence country
   documentType: DocumentTypeEnum.CC,
   documentNumber: "",
+  acceptsTermsAndConditions: false,
+  acceptsBusinessCollaborationContract: false,
+  acceptsOriginOfFundsDeclaration: false,
 };
 
 export function useCompleteProfileForm() {
@@ -199,6 +202,7 @@ export function useCompleteProfileForm() {
     formData,
     errors,
     currentFields,
+    stepKind: currentStepConfig?.kind ?? "fields",
     isLastStep,
     isLoading,
     handleChange,

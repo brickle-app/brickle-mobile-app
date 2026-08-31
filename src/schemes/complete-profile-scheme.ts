@@ -30,9 +30,27 @@ export const step2Schema = z.object({
     .regex(/^\d+$/, "Número de documento debe ser numérico"), // Added regex for numeric check
 });
 
-export const completeProfileSchema = step1Schema.merge(step2Schema);
+export const consentSchema = z.object({
+  acceptsTermsAndConditions: z.literal<boolean>(true, {
+    errorMap: () => ({ message: "Debes aceptar los Términos y condiciones" }),
+  }),
+  acceptsBusinessCollaborationContract: z.literal<boolean>(true, {
+    errorMap: () => ({
+      message: "Debes aceptar el Contrato de colaboración empresarial",
+    }),
+  }),
+  acceptsOriginOfFundsDeclaration: z.literal<boolean>(true, {
+    errorMap: () => ({
+      message: "Debes aceptar la Declaración de origen de fondos",
+    }),
+  }),
+});
+
+export const completeProfileSchema = step1Schema
+  .merge(step2Schema)
+  .merge(consentSchema);
 
 export type CompleteProfileFormData = z.infer<typeof completeProfileSchema>;
 
 // Define a type for step-specific schemas for easier use in the hook
-export type StepSchema = typeof step1Schema | typeof step2Schema;
+export type StepSchema = typeof step1Schema | typeof step2Schema | typeof consentSchema;

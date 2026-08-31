@@ -16,6 +16,7 @@ import { Button } from "../../ui/button/Button";
 import { useRouter } from "expo-router";
 import { Colors } from "@/assets/Colors";
 import { DocumentTypeEnum } from "@/src/types/user.types";
+import ConsentStep from "./ConsentStep";
 
 const CompleteProfileForm = () => {
   const router = useRouter();
@@ -32,6 +33,7 @@ const CompleteProfileForm = () => {
     formData,
     errors,
     currentFields,
+    stepKind,
     isLastStep,
     handleChange,
     nextStep,
@@ -79,7 +81,14 @@ const CompleteProfileForm = () => {
 
             {/* Form Fields */}
             <View className="flex w-full flex-col justify-center items-center gap-4">
-              {currentFields.map((field) => {
+              {stepKind === "consent" ? (
+                <ConsentStep
+                  formData={formData}
+                  errors={errors}
+                  onChange={(field, value) => handleChange(field, value)}
+                />
+              ) : (
+                currentFields.map((field) => {
                 if (field.type === "select" && field.options) {
                   return (
                     <SelectBottomSheet
@@ -143,7 +152,8 @@ const CompleteProfileForm = () => {
                     inputWrapperClassName="!w-full"
                   />
                 );
-              })}
+                })
+              )}
             </View>
           </View>
 

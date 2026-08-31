@@ -15,6 +15,9 @@ describe("buildCompleteProfileUpdate", () => {
         residenceCountry: "CO",
         documentType: DocumentTypeEnum.CC,
         documentNumber: "123456789",
+        acceptsTermsAndConditions: true,
+        acceptsBusinessCollaborationContract: true,
+        acceptsOriginOfFundsDeclaration: true,
       }
     );
 
@@ -23,5 +26,25 @@ describe("buildCompleteProfileUpdate", () => {
       isProfileUnderReview: false,
       termsAccepted: true,
     });
+  });
+
+  it("does not mark terms as accepted if any consent checkbox is missing", () => {
+    const payload = buildCompleteProfileUpdate({
+      id: "user-1",
+      email: "karen18e@gmail.com",
+      firstName: "Karen",
+      lastName: "Diaz",
+      phoneNumber: "3001234567",
+      birthDate: "18/06/1990",
+      nationality: "CO",
+      residenceCountry: "CO",
+      documentType: DocumentTypeEnum.CC,
+      documentNumber: "123456789",
+      acceptsTermsAndConditions: true,
+      acceptsBusinessCollaborationContract: false,
+      acceptsOriginOfFundsDeclaration: true,
+    });
+
+    expect(payload.termsAccepted).toBe(false);
   });
 });
