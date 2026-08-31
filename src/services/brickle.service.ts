@@ -290,15 +290,64 @@ export const uploadUserProfileImage = async (
   }
 };
 
-export const uploadIdentityDocument = async (
+export type UserDocumentStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export type UserDocumentType = "IDENTITY" | "BANK_CERTIFICATE";
+
+export const USER_DOCUMENT_TYPE_LABELS: Record<UserDocumentType, string> = {
+  IDENTITY: "Documento de Identidad",
+  BANK_CERTIFICATE: "Certificado Bancario",
+};
+
+export interface UserDocumentDto {
+  id: string;
+  userId: string;
+  name: string;
+  documentType: UserDocumentType;
+  documentUrl: string;
+  status: UserDocumentStatus;
+  observation?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const getUserDocuments = async (
+  user: BrickleUser
+): Promise<UserDocumentDto[]> => {
+  try {
+    const response = await brickleClient.get<UserDocumentDto[]>(
+      `/api/User/${user.id}/documents`,
+      {
+        headers: {
+          correlationId: uuid.v4(),
+          user: user.email,
+          source: BRICKLE_SOURCE,
+          RequestDate: new Date().toISOString(),
+        },
+      }
+    );
+
+    return response.data ?? [];
+  } catch (error) {
+    console.error("Error fetching user documents:", error);
+    return [];
+  }
+};
+
+export const uploadUserDocument = async (
   user: BrickleUser,
-  image: ImagePicker.ImagePickerAsset
+  image: ImagePicker.ImagePickerAsset,
+  documentType: UserDocumentType
 ) => {
   try {
     const formData = new FormData();
     formData.append("UserId", user.id);
-    formData.append("Name", "Identity Document");
-    formData.append("File", sanitizeUploadImage(image, "User.Identity") as any);
+    formData.append("Name", USER_DOCUMENT_TYPE_LABELS[documentType]);
+    formData.append("DocumentType", documentType);
+    formData.append(
+      "File",
+      sanitizeUploadImage(image, `User.${documentType}`) as any
+    );
 
     const response = await brickleClient.post<{ documentUrl: string }>(
       `/api/User/documents`,
@@ -323,7 +372,7 @@ export const uploadIdentityDocument = async (
 
     return documentUrl;
   } catch (error) {
-    console.error("Error uploading identity document:", error);
+    console.error("Error uploading user document:", error);
     if (isAxiosError(error)) {
       const errorMessage =
         error.response?.data?.message ||
