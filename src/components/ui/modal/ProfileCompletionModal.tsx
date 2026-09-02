@@ -131,10 +131,14 @@ export const ProfileCompletionModal = ({
           ? error.message.replace(/^Brickle API Error:\s*/i, '').trim()
           : 'No se pudo subir el documento. Comprueba tu conexión e inténtalo de nuevo.';
 
+      // La subida falló: limpiamos el slot (incluida la preview) para que la UI no muestre
+      // "Documento cargado" sobre un documento que en realidad no llegó al backend, lo que
+      // dejaba el botón de enviar oculto (depende de `documentUrl`) sin ninguna pista visible.
+      setSlots((prev) => ({ ...prev, [documentType]: emptySlot }));
+
       if (rawMessage.startsWith('DUPLICATE_DOCUMENT:')) {
         // El backend ya tiene un documento PENDING/APPROVED de este tipo: re-sincronizamos
         // el estado real en vez de dejar reintentar, para no volver a chocar con el mismo error.
-        setSlots((prev) => ({ ...prev, [documentType]: emptySlot }));
         await refreshDocumentStatus();
         Alert.alert('Documento ya registrado', rawMessage.replace(/^DUPLICATE_DOCUMENT:\s*/, ''));
       } else {
@@ -221,10 +225,21 @@ export const ProfileCompletionModal = ({
                   source={{ uri: slot.pickedImage.uri }}
                   className="w-16 h-16 rounded-lg mb-3"
                 />
-                <Ionicons name="checkmark-circle" size={16} color={Colors.greenPrimary} />
-                <Text className="text-green-600 font-libre-bold mt-1">
-                  Documento cargado
-                </Text>
+                {slot.documentUrl ? (
+                  <>
+                    <Ionicons name="checkmark-circle" size={16} color={Colors.greenPrimary} />
+                    <Text className="text-green-600 font-libre-bold mt-1">
+                      Documento cargado
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <ActivityIndicator size="small" color={Colors.orangePrimary} />
+                    <Text className="text-orange-700 font-libre-regular mt-1">
+                      Subiendo...
+                    </Text>
+                  </>
+                )}
               </View>
             ) : (
               <View className="items-center">

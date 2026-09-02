@@ -21,7 +21,7 @@ import { LEGAL_DOCUMENTS } from "@/src/constants/legal-documents";
 interface DocumentItemProps {
   title: string;
   onView: () => void;
-  onDownload: () => void;
+  onDownload?: () => void;
 }
 
 const DocumentItem = ({ title, onView, onDownload }: DocumentItemProps) => (
@@ -33,9 +33,11 @@ const DocumentItem = ({ title, onView, onDownload }: DocumentItemProps) => (
       <TouchableOpacity onPress={onView} activeOpacity={0.7} hitSlop={8}>
         <EyeIcon height={32} width={32} />
       </TouchableOpacity>
-      <TouchableOpacity onPress={onDownload} activeOpacity={0.7} hitSlop={8}>
-        <DownloadIcon height={32} width={32} />
-      </TouchableOpacity>
+      {onDownload && (
+        <TouchableOpacity onPress={onDownload} activeOpacity={0.7} hitSlop={8}>
+          <DownloadIcon height={32} width={32} />
+        </TouchableOpacity>
+      )}
     </View>
   </View>
 );
@@ -47,6 +49,13 @@ const LegalDocumentsScreen = () => {
     router.push({
       pathname: "/webview",
       params: { url, title },
+    });
+  }
+
+  function openSignedDocument(documentId: string) {
+    router.push({
+      pathname: "/legal-document",
+      params: { documentId },
     });
   }
 
@@ -86,8 +95,16 @@ const LegalDocumentsScreen = () => {
               <DocumentItem
                 key={doc.id}
                 title={doc.title}
-                onView={() => openInAppViewer(doc.url, doc.title)}
-                onDownload={() => openExternally(doc.url)}
+                onView={() =>
+                  doc.requiresSignature
+                    ? openSignedDocument(doc.id)
+                    : openInAppViewer(doc.url, doc.title)
+                }
+                onDownload={
+                  doc.requiresSignature
+                    ? undefined
+                    : () => openExternally(doc.url)
+                }
               />
             ))}
           </View>

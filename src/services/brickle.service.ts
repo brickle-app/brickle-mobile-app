@@ -140,6 +140,54 @@ export const updateUser = async (userData: BrickleUserUpdateRequest) => {
   }
 };
 
+export interface SignUserDocumentRequest {
+  userId: string;
+  documentType: string;
+  documentVersion: string;
+  signaturePaths: string[];
+  signerName: string;
+}
+
+export interface UserDocumentSignatureResponse {
+  id: string;
+  userId: string;
+  documentType: string;
+  documentVersion: string;
+  signerName: string;
+  signedAt: string;
+}
+
+export const signUserDocument = async (
+  payload: SignUserDocumentRequest,
+  userEmail?: string
+): Promise<UserDocumentSignatureResponse> => {
+  try {
+    const response = await brickleClient.post<UserDocumentSignatureResponse>(
+      `/api/User/document-signatures`,
+      payload,
+      {
+        headers: {
+          correlationId: uuid.v4(),
+          user: userEmail,
+          source: BRICKLE_SOURCE,
+          RequestDate: new Date().toISOString(),
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "Unknown Brickle API error";
+      throw new Error(`Brickle API Error: ${errorMessage}`);
+    }
+    throw error;
+  }
+};
+
 export const getInvestmentsGroupedByCategory = async (
   email: string,
   active: boolean = true,

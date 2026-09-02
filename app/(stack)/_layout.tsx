@@ -29,6 +29,7 @@ const StackLayout = () => {
       >
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="webview" options={{ title: "WebView" }} />
+        <Stack.Screen name="legal-document" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ title: "Home" }} />
         <Stack.Screen name="leasing" options={{ headerShown: false }} />
         <Stack.Screen name="asset-detail" options={{ headerShown: false }} />

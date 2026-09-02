@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { Colors } from "@/assets/Colors";
 import { CompleteProfileFormData } from "@/src/schemes/complete-profile-scheme";
 import { PROFILE_CONSENT_DOCUMENTS } from "@/src/constants/legal-documents";
+import { documentSignatureStore } from "@/src/store/documentSignature.store";
 
 type ConsentFieldKey =
   | "acceptsTermsAndConditions"
@@ -36,7 +38,28 @@ interface ConsentStepProps {
 }
 
 const ConsentStep = ({ formData, errors, onChange }: ConsentStepProps) => {
-  function openDocument(url: string, title: string) {
+  const isSigned = documentSignatureStore((state) => state.isSigned);
+
+  // When returning from the in-app document/signature screen, sync the
+  // checkbox with whatever was actually signed there.
+  useFocusEffect(
+    useCallback(() => {
+      CONSENT_ITEMS.forEach(({ field, documentId }) => {
+        const document = PROFILE_CONSENT_DOCUMENTS.find((doc) => doc.id === documentId);
+        if (document?.requiresSignature && isSigned(documentId) && !formData[field]) {
+          onChange(field, true);
+        }
+      });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formData])
+  );
+
+  function openDocument(documentId: string, url: string, title: string) {
+    const document = PROFILE_CONSENT_DOCUMENTS.find((doc) => doc.id === documentId);
+    if (document?.requiresSignature) {
+      router.push({ pathname: "/legal-document", params: { documentId } });
+      return;
+    }
     router.push({ pathname: "/webview", params: { url, title } });
   }
 
@@ -51,13 +74,18 @@ const ConsentStep = ({ formData, errors, onChange }: ConsentStepProps) => {
         const document = PROFILE_CONSENT_DOCUMENTS.find((doc) => doc.id === documentId)!;
         const checked = Boolean(formData[field]);
         const error = errors[field];
+        const requiresSignature = Boolean(document.requiresSignature);
 
         return (
           <View key={field} className="w-full">
             <TouchableOpacity
               className="flex-row items-start gap-3"
               activeOpacity={0.7}
-              onPress={() => onChange(field, !checked)}
+              onPress={() =>
+                requiresSignature
+                  ? openDocument(documentId, document.url, document.title)
+                  : onChange(field, !checked)
+              }
               accessibilityRole="checkbox"
               accessibilityState={{ checked }}
             >
@@ -70,10 +98,13 @@ const ConsentStep = ({ formData, errors, onChange }: ConsentStepProps) => {
                 {label}{" "}
                 <Text
                   className="font-libre-bold underline"
-                  onPress={() => openDocument(document.url, document.title)}
+                  onPress={() => openDocument(documentId, document.url, document.title)}
                 >
                   {document.title}
                 </Text>
+                {requiresSignature && checked ? (
+                  <Text className="text-green-600 font-libre-bold text-xs"> (firmado)</Text>
+                ) : null}
               </Text>
             </TouchableOpacity>
             {error && (

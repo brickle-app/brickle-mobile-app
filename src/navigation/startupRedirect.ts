@@ -22,7 +22,9 @@ export function getStartupRedirectPath({
     path.includes("login") ||
     path.includes("verify-otp") ||
     path.includes("register") ||
-    path.includes("redirect-handler");
+    path.includes("redirect-handler") ||
+    path.includes("webview") ||
+    path.includes("legal-document");
 
   if (!hasUser) {
     return isPublicAuthRoute ? null : "/(stack)/(auth)/login";
@@ -49,14 +51,22 @@ export function getStartupRedirectPath({
     path.includes("asset-detail") ||
     path.includes("leasing") ||
     path.includes("support") ||
-      path.includes("webview");
+      path.includes("webview") ||
+      path.includes("legal-document");
+
+  const isDocumentViewerRoute =
+    path.includes("webview") || path.includes("legal-document");
 
   if (isBasicProfileComplete === false) {
-    return isCompleteProfileRoute ? null : "/(stack)/(auth)/complete-profile";
+    return isCompleteProfileRoute || isDocumentViewerRoute
+      ? null
+      : "/(stack)/(auth)/complete-profile";
   }
 
   if (!hasPin) {
-    return postponePinSetup || path.includes("pin-setup") ? null : "/(stack)/pin-setup";
+    return postponePinSetup || path.includes("pin-setup") || isDocumentViewerRoute
+      ? null
+      : "/(stack)/pin-setup";
   }
 
   if (isLocked) {
