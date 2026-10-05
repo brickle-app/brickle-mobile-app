@@ -144,11 +144,22 @@ export async function createLocalWallet() {
   return { walletAddress, privateKey };
 }
 
+let pendingPrivateKeyLoad: Promise<string | null> | null = null;
+
+/**
+ * In-memory key, or the device key (biometric prompt when protected).
+ * Throws WalletKeyUnlockError when the user cancels the biometric prompt.
+ */
 export async function getPrivateKey(): Promise<string | null> {
   const storedKey = authStore.getState().privateKey;
   if (storedKey) return storedKey;
 
-  const secureKey = await loadPrivateKeyFromSecureStore();
+  // Concurrent callers share one biometric prompt.
+  pendingPrivateKeyLoad ??= loadPrivateKeyFromSecureStore().finally(() => {
+    pendingPrivateKeyLoad = null;
+  });
+
+  const secureKey = await pendingPrivateKeyLoad;
   if (secureKey) {
     authStore.getState().setPrivateKey(secureKey);
     return secureKey;
@@ -477,10 +488,6 @@ export const restoreSessionFromRefreshToken = async (): Promise<boolean> => {
     return false;
   }
 
-  const privateKey = await loadPrivateKeyFromSecureStore();
-  if (privateKey) {
-    authStore.getState().setPrivateKey(privateKey);
-  }
-
+  // The signing key is loaded lazily (biometric prompt) right before signing.
   return true;
 };

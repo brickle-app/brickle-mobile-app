@@ -6,22 +6,28 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 import { usePinStore } from "./pin.store";
 import { searchStore } from "./search.store";
+import {
+  deleteWalletSigningKey,
+  loadWalletSigningKey,
+  saveWalletSigningKey,
+  WalletKeyUnlockError,
+} from "../services/wallet-key-storage.service";
 
-const PRIVATE_KEY_STORAGE_KEY = "brickle_private_key";
 const REFRESH_TOKEN_STORAGE_KEY = "brickle_refresh_token";
 
 export async function persistPrivateKeyToSecureStore(privateKey: string): Promise<void> {
   try {
-    await SecureStore.setItemAsync(PRIVATE_KEY_STORAGE_KEY, privateKey);
+    await saveWalletSigningKey(privateKey);
     console.log("✅ Private key persisted to SecureStore");
   } catch (error) {
     console.error("❌ Error persisting private key to SecureStore:", error);
   }
 }
 
+/** May prompt biometrics. Throws WalletKeyUnlockError if the user cancels the prompt. */
 export async function loadPrivateKeyFromSecureStore(): Promise<string | null> {
   try {
-    const privateKey = await SecureStore.getItemAsync(PRIVATE_KEY_STORAGE_KEY);
+    const privateKey = await loadWalletSigningKey();
     if (privateKey) {
       console.log("✅ Private key loaded from SecureStore");
     } else {
@@ -29,17 +35,9 @@ export async function loadPrivateKeyFromSecureStore(): Promise<string | null> {
     }
     return privateKey;
   } catch (error) {
+    if (error instanceof WalletKeyUnlockError) throw error;
     console.error("❌ Error loading private key from SecureStore:", error);
     return null;
-  }
-}
-
-export async function clearPrivateKeyFromSecureStore(): Promise<void> {
-  try {
-    await SecureStore.deleteItemAsync(PRIVATE_KEY_STORAGE_KEY);
-    console.log("✅ Private key cleared from SecureStore");
-  } catch (error) {
-    console.error("❌ Error clearing private key from SecureStore:", error);
   }
 }
 
@@ -74,7 +72,7 @@ interface State {
   setNewUser: (newUser: boolean) => void;
   setPrivateKey: (privateKey: string) => void;
   clearPrivateKey: () => void;
-  logout: () => Promise<void>;
+  logout: (options?: { preserveWalletKey?: boolean }) => Promise<void>;
   reset: () => Promise<void>;
   setTotalReturn: (totalReturn: number) => void;
   setTotalInvested: (totalInvested: number) => void;
@@ -158,10 +156,9 @@ export const authStore = create<State>()(
           set({ error: "Failed to set private key" });
         }
       },
-      clearPrivateKey: () => {
-    set({ privateKey: null });
-    clearPrivateKeyFromSecureStore();
-  },
+      // Drops only the in-memory copy (app backgrounded). The device copy stays protected
+      // in SecureStore and getPrivateKey() reloads it (with biometrics when available).
+      clearPrivateKey: () => set({ privateKey: null }),
       setTokenExpiration: (tokenExpiration: number) => {
         try {
           set({ tokenExpiration });
@@ -183,11 +180,13 @@ export const authStore = create<State>()(
       setRoi: (roi: number) => {
         set({ roi });
       },
-      logout: async () => {
+      logout: async (options) => {
         try {
           await usePinStore.getState().removePin();
           await Promise.allSettled([
-            SecureStore.deleteItemAsync(PRIVATE_KEY_STORAGE_KEY),
+            // Session expiry keeps the device signing key so the user does not have to
+            // restore the wallet; it is checked against the account wallet before signing.
+            options?.preserveWalletKey ? Promise.resolve() : deleteWalletSigningKey(),
             SecureStore.deleteItemAsync(REFRESH_TOKEN_STORAGE_KEY),
           ]);
           set(initialState);
@@ -224,7 +223,7 @@ export const authStore = create<State>()(
         try {
           await usePinStore.getState().removePin();
           await Promise.allSettled([
-            SecureStore.deleteItemAsync(PRIVATE_KEY_STORAGE_KEY),
+            deleteWalletSigningKey(),
             SecureStore.deleteItemAsync(REFRESH_TOKEN_STORAGE_KEY),
           ]);
           set(initialState);

@@ -72,7 +72,7 @@ export const checkSessionError = async (error: any) => {
 export const handleSessionExpiry = () => {
   const { logout } = authStore.getState();
   stopInactivityTimer();
-  logout();
+  logout({ preserveWalletKey: true });
   sessionModalState.hideModal();
   if (router) {
     router.replace("/(stack)/(auth)/login");

@@ -18,6 +18,9 @@ const mapUserActivityLogToTransaction = (log: UserActivityLog, index: number): T
       case 'INVESTMENT-RETURN-INTEREST':
       case 'INVESTMENT-RETURN-CAPITAL':
         return 'investment-return';
+      case 'INVESTMENT-RETURN-FEE':
+      case 'INVESTMENT-RETURN-WITHHOLDING':
+        return 'deduction';
       case 'RECHARGE':
         return 'recharge';
       case 'WITHDRAW':

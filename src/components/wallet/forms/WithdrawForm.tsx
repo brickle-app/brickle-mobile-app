@@ -8,7 +8,9 @@ import { AddAccountModal } from '@/src/components/wallet/modals/AddAccountModal'
 import { DeleteConfirmationModal } from '@/src/components/wallet/modals/DeleteConfirmationModal';
 import { GetUserAccounts } from '@/src/types/user-account';
 import { getAllBankAccounts, deleteBankAccount } from '@/src/services/account.service';
-import { authStore, persistPrivateKeyToSecureStore, loadPrivateKeyFromSecureStore } from '@/src/store/auth.store';
+import { authStore, persistPrivateKeyToSecureStore } from '@/src/store/auth.store';
+import { getPrivateKey } from '@/src/services/auth.service';
+import { WalletKeyUnlockError } from '@/src/services/wallet-key-storage.service';
 import { useBlockchainConfigStore } from '@/src/store/blockchainConfig.store';
 import OperationStatusModal from '../OperationStatusModal';
 import { formatColombianPesos, parseCopAmountFromText } from '@/src/utils/formatCurrency';
@@ -138,12 +140,12 @@ export const WithdrawForm = ({ setIsModalVisible }: { setIsModalVisible: (visibl
       let txHash = "";
 
       /** Clave en store o recuperada del almacenamiento seguro local. */
-      let signingKey = authStore.getState().privateKey;
-      if (!signingKey) {
-        signingKey = await loadPrivateKeyFromSecureStore();
-        if (signingKey) {
-          authStore.getState().setPrivateKey(signingKey);
-        }
+      let signingKey: string | null;
+      try {
+        signingKey = await getPrivateKey();
+      } catch (unlockError) {
+        if (unlockError instanceof WalletKeyUnlockError) return;
+        throw unlockError;
       }
 
       // Transferencia on-chain de los tokens al Treasury de Brickle (PaymentWalletAddress) si hay clave.

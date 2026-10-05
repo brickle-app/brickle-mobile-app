@@ -11,7 +11,7 @@ import { formatCurrency } from "@/src/utils/formatCurrency";
 // Definir la interfaz Transaction primero
 export interface Transaction {
   id: string;
-  type: "investment" | "withdraw" | "investment-return" | "recharge";
+  type: "investment" | "withdraw" | "investment-return" | "recharge" | "deduction";
   description: string;
   date: string;
   amount: number;
@@ -24,8 +24,8 @@ export const renderTransactionItem = ({ item }: { item: Transaction }) => {
   let icon;
   if (item.type === "investment") {
     icon = <Logo width={18} height={32} />
-  } else if (item.type === "withdraw") {
-    icon = <Withdraw width={50} height={36} color={Colors.orangePrimary} />
+  } else if (item.type === "withdraw" || item.type === "deduction") {
+    icon = <Withdraw width={50} height={36} color={item.type === "deduction" ? Colors.red : Colors.orangePrimary} />
   } else if (item.type === "investment-return") {
     icon = <InvestmentReturn width={50} height={36} color={Colors.greenPrimary} />
   } else if (item.type === "recharge") {
@@ -33,6 +33,8 @@ export const renderTransactionItem = ({ item }: { item: Transaction }) => {
   } else {
     icon = <Feather name="refresh-cw" size={24} color="#2196F3" />;
   }
+
+  const isDeduction = item.type === "deduction";
 
   return (
     <View className="flex-row items-center py-3 px-4 h-[67px]" style={styles.container}>
@@ -43,7 +45,13 @@ export const renderTransactionItem = ({ item }: { item: Transaction }) => {
         <Text className="font-libre-regular">{item.description}</Text>
         <Text className="text-sm text-gray-500">{item.date}</Text>
       </View>
-      <Text className="font-libre-bold">{formatCurrency(item.amount)}</Text>
+      <Text
+        className="font-libre-bold"
+        style={isDeduction ? { color: Colors.red } : undefined}
+      >
+        {isDeduction ? "-" : ""}
+        {formatCurrency(Math.abs(item.amount))}
+      </Text>
     </View>
   );
 };

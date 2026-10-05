@@ -3,11 +3,11 @@ import {
   createContract,
   getWallet,
 } from "../components/wallet/contracts/config/clients/polygon";
-import { authStore } from "../store/auth.store";
+import { getPrivateKey } from "./auth.service";
 import { useBlockchainConfigStore } from "../store/blockchainConfig.store";
 
 export const rechargeAccount = async () => {
-  const privateKey = authStore.getState().privateKey;
+  const privateKey = await getPrivateKey();
   if (!privateKey) {
     throw new Error("Private key not found");
   }

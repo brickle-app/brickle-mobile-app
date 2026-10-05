@@ -47,6 +47,12 @@ export async function purchaseLeasingAsset({
     return false;
   }
 
+  if (readiness.status === "unlockCancelled") {
+    // User dismissed Face ID / fingerprint: nothing to fix, they can tap buy again.
+    console.warn("Wallet unlock was cancelled by the user.");
+    return false;
+  }
+
   if (readiness.status === "restoreRequired") {
     console.warn("Private key not found in auth store. Wallet recovery is required.");
     onMissingPrivateKey();

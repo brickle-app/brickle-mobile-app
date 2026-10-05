@@ -24,7 +24,9 @@ export const useSessionActivity = () => {
             if (userData) setUser(userData as any);
           }).catch(() => {});
         }
-      } else if (nextAppState === 'background' || nextAppState === 'inactive') {
+      } else if (nextAppState === 'background') {
+        // Not on 'inactive': iOS enters it for Face ID prompts, Control Center and system
+        // alerts, which would lock the app in the middle of a signature.
         stopInactivityTimer();
         clearPrivateKey();
         if (isAuthenticated && hasPin) lock();

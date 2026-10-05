@@ -45,7 +45,7 @@ export const getUserActivityLogs = async (
   leasingId?: string,
   daysBack: number = 30,
   status?: "SUCCESS" | "PENDING" | "FAILED",
-  type?: "RECHARGE" | "INVESTMENT" | "INVESTMENT-RETURN" | "INVESTMENT-RETURN-INTEREST" | "INVESTMENT-RETURN-CAPITAL" | "WITHDRAW"
+  type?: "RECHARGE" | "INVESTMENT" | "INVESTMENT-RETURN" | "INVESTMENT-RETURN-INTEREST" | "INVESTMENT-RETURN-CAPITAL" | "INVESTMENT-RETURN-FEE" | "INVESTMENT-RETURN-WITHHOLDING" | "WITHDRAW"
 ) => {
   try {
     let url = `/api/UserActivityLog/${userId}?daysBack=${daysBack}`;

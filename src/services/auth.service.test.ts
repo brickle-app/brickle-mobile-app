@@ -172,13 +172,16 @@ describe("getPrivateKey", () => {
     authStore.setState({ privateKey: null });
   });
 
-  it("returns only the in-memory private key and never reads SecureStore", async () => {
-    await expect(getPrivateKey()).resolves.toBeNull();
-    expect(SecureStore.getItemAsync).not.toHaveBeenCalledWith("brickle_private_key");
-
+  it("returns the in-memory private key without reading device storage", async () => {
     authStore.setState({ privateKey: "0xprivate" });
 
     await expect(getPrivateKey()).resolves.toBe("0xprivate");
-    expect(SecureStore.getItemAsync).not.toHaveBeenCalledWith("brickle_private_key");
+    expect(SecureStore.getItemAsync).not.toHaveBeenCalled();
+  });
+
+  it("returns null when the device holds no signing key", async () => {
+    jest.mocked(SecureStore.getItemAsync).mockResolvedValue(null);
+
+    await expect(getPrivateKey()).resolves.toBeNull();
   });
 });

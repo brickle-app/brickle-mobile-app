@@ -40,6 +40,7 @@ import {
 } from "@/src/services/wallet-readiness.service";
 import { BrickleService } from "@/src/services/brickle.service";
 import { refreshAuthenticatedUser } from "@/src/services/refresh-authenticated-user";
+import { hasWalletSigningKeyFor } from "@/src/services/wallet-key-storage.service";
 
 const WalletScreen = () => {
   const router = useRouter();
@@ -51,8 +52,8 @@ const WalletScreen = () => {
   const walletAddress = authStore((state) => state.user?.walletAddress);
   const user = authStore((state) => state.user);
   const setUser = authStore((state) => state.setUser);
-  const privateKey = authStore((state) => state.privateKey);
   const [backupStatus, setBackupStatus] = useState<WalletBackupStatus>("unknown");
+  const [hasDeviceSigningKey, setHasDeviceSigningKey] = useState(false);
   const walletVerificationNotice = getWalletVerificationNotice(user);
   const currentValue = authStore((state) => state.currentValue);
   const totalInvested = authStore((state) => state.totalInvested);
@@ -114,6 +115,7 @@ const WalletScreen = () => {
   const fetchWalletBackupStatus = useCallback(async () => {
     try {
       const backup = await getWalletBackup();
+      setHasDeviceSigningKey(await hasWalletSigningKeyFor(backup.walletAddress));
       setBackupStatus(
         backup.encryptionVersion === "ethers-keystore-v1-backup-code"
           ? "backupCode"
@@ -138,7 +140,7 @@ const WalletScreen = () => {
         isProfileUnderReview: user?.isProfileUnderReview,
         hasWalletAddress: Boolean(walletAddress),
         backupStatus: effectiveBackupStatus,
-        hasPrivateKey: Boolean(privateKey),
+        hasPrivateKey: hasDeviceSigningKey,
       });
 
   useFocusEffect(

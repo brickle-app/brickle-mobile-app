@@ -136,7 +136,9 @@ export default function MyInvestments() {
             (log) =>
               log.type === "INVESTMENT-RETURN" ||
               log.type === "INVESTMENT-RETURN-INTEREST" ||
-              log.type === "INVESTMENT-RETURN-CAPITAL"
+              log.type === "INVESTMENT-RETURN-CAPITAL" ||
+              log.type === "INVESTMENT-RETURN-FEE" ||
+              log.type === "INVESTMENT-RETURN-WITHHOLDING"
           );
           setRawRentLogs(rentLogs);
         } else {
@@ -313,9 +315,12 @@ export default function MyInvestments() {
         .replace(/Inversi[óo]n/gi, "Compra")
         .replace(/\[Intereses\]/gi, "[Rendimiento]")
         .replace(/Intereses/gi, "Rendimiento");
+      const isDeduction =
+        log.type === "INVESTMENT-RETURN-FEE" ||
+        log.type === "INVESTMENT-RETURN-WITHHOLDING";
       return {
         id: `${log.userId}-${index}`,
-        type: "investment-return",
+        type: isDeduction ? "deduction" : "investment-return",
         description,
         date: formatDate(log.timestamp || new Date().toISOString()),
         amount: Math.round(log.txAmount),

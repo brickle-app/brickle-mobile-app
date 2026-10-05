@@ -5,6 +5,7 @@ import {
 } from "@/src/components/wallet/contracts/config/clients/polygon";
 import usdcAbi from "@/src/components/wallet/contracts/config/abis/usdc-mock.json";
 import { authStore } from "@/src/store/auth.store";
+import { getPrivateKey } from "@/src/services/auth.service";
 import { useBlockchainConfigStore } from "@/src/store/blockchainConfig.store";
 import { notifyIncomingTransferToPeer } from "@/src/services/brickle.service";
 
@@ -39,7 +40,7 @@ export const transferToContact = async (
       };
     }
 
-    const privateKey = authStore.getState().privateKey;
+    const privateKey = await getPrivateKey();
     
     if (!privateKey) {
       return {
