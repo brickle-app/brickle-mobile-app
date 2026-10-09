@@ -39,13 +39,16 @@ describe("restoreWalletBackupToDevice", () => {
     jest.mocked(getWalletBackup).mockResolvedValueOnce(backup);
     jest.mocked(restorePrivateKeyFromBackup).mockResolvedValueOnce("0xprivate");
 
-    const result = await restoreWalletBackupToDevice("recovery password");
+    const steps: string[] = [];
+    const result = await restoreWalletBackupToDevice("recovery password", { onStep: (step) => steps.push(step) });
 
     expect(getWalletBackup).toHaveBeenCalledWith();
     expect(restorePrivateKeyFromBackup).toHaveBeenCalledWith({
       backup,
       recoveryPassword: "recovery password",
+      onProgress: expect.any(Function),
     });
+    expect(steps).toEqual(["fetching", "deriving", "securing", "done"]);
     expect(authStore.getState().privateKey).toBe("0xprivate");
     expect(result.walletAddress).toBe("0xabc");
   });

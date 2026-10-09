@@ -5,6 +5,62 @@ import { WalletBackupPayload } from "@/src/types/walletBackup.types";
 
 type RandomBytesSource = (byteCount: number) => Uint8Array;
 
+/**
+ * ethers derives the keystore key with scrypt from @noble/hashes. Its async version yields between
+ * chunks with a resolved promise (a microtask), which never lets React Native render: the restore
+ * overlay froze for the whole derivation. Yielding with setTimeout(0) on every chunk is not enough
+ * either, because the timers saturate the JS thread and React never gets a turn.
+ *
+ * Metro resolves ethers to its ESM build, whose copy of noble can't be patched, so we register our own
+ * scrypt in ethers backed by noble's CommonJS copy and replace its `nextTick`: cheap microtask yields
+ * while working, and every ~120ms one real frame so React can commit the progress UI (~12% overhead).
+ */
+const SCRYPT_WORK_SLICE_MS = 120;
+const SCRYPT_FRAME_YIELD_MS = 16;
+
+function registerFrameFriendlyScrypt() {
+  try {
+    let lastFrameYield = Date.now();
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const nobleUtils = require("@noble/hashes/utils");
+    nobleUtils.nextTick = async () => {
+      if (Date.now() - lastFrameYield < SCRYPT_WORK_SLICE_MS) return;
+      await new Promise<void>((resolve) => setTimeout(resolve, SCRYPT_FRAME_YIELD_MS));
+      lastFrameYield = Date.now();
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { scryptAsync } = require("@noble/hashes/scrypt");
+    ethers.scrypt.register(
+      (
+        passwd: Uint8Array,
+        salt: Uint8Array,
+        N: number,
+        r: number,
+        p: number,
+        dkLen: number,
+        onProgress?: (progress: number) => void
+      ) => scryptAsync(passwd, salt, { N, r, p, dkLen, onProgress })
+    );
+  } catch (error) {
+    console.warn("[wallet] Could not register frame-friendly scrypt:", error);
+  }
+}
+
+registerFrameFriendlyScrypt();
+
+/** scrypt reports ~10,000 times per derivation; only forward when the whole percent changes. */
+function throttleToWholePercent(onProgress: (progress: number) => void) {
+  let lastPercent = -1;
+  return (progress: number) => {
+    const percent = Math.floor(progress * 100);
+    if (percent !== lastPercent) {
+      lastPercent = percent;
+      onProgress(percent / 100);
+    }
+  };
+}
+
 interface CreateWalletBackupParams {
   privateKey: string;
   recoveryPassword: string;
@@ -20,6 +76,8 @@ interface CreateWalletBackupWithBackupCodeParams {
 interface RestorePrivateKeyParams {
   backup: WalletBackupPayload;
   recoveryPassword: string;
+  /** Called with a 0..1 fraction while the (slow) scrypt key derivation runs. */
+  onProgress?: (progress: number) => void;
 }
 
 function readKeystoreKdfParams(encryptedJson: string) {
@@ -85,11 +143,13 @@ export async function createWalletBackupWithBackupCode({
 export async function restorePrivateKeyFromBackup({
   backup,
   recoveryPassword,
+  onProgress,
 }: RestorePrivateKeyParams) {
   try {
     const wallet = await ethers.Wallet.fromEncryptedJson(
       backup.encryptedPrivateKey,
-      recoveryPassword
+      recoveryPassword,
+      onProgress && throttleToWholePercent(onProgress)
     );
 
     if (wallet.address.toLowerCase() !== backup.walletAddress.toLowerCase()) {
@@ -98,6 +158,6 @@ export async function restorePrivateKeyFromBackup({
 
     return wallet.privateKey;
   } catch {
-    throw new Error("No se pudo restaurar la wallet. Revisa tu contraseña de recuperación.");
+    throw new Error("No se pudo restaurar la wallet. Revisa tus códigos de respaldo.");
   }
 }

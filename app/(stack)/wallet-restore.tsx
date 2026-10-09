@@ -1,65 +1,61 @@
 import React, { useState } from "react";
-import { ActivityIndicator, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, Text, View } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/assets/Colors";
 import { Button } from "@/src/components/ui/button/Button";
-import { FormField } from "@/src/components/ui/input";
+import { SeedPhraseInput } from "@/src/components/wallet/SeedPhraseInput";
+import { applyWordsAt, emptySeedWords, isSeedPhraseComplete, joinSeedWords, splitSeedWords } from "@/src/utils/seedPhrase";
 import StandaloneHeader from "@/src/components/ui/customHeader/standaloneHeder";
 import { restoreWalletBackupToDevice } from "@/src/services/wallet-restore.service";
 import { goBackOrReplace } from "@/src/utils/navigationFallback";
-
-function RestoreLoadingOverlay() {
-  return (
-    <View style={styles.overlay}>
-      <View style={styles.card}>
-        <View style={styles.iconContainer}>
-          <Ionicons name="shield-checkmark" size={48} color={Colors.bluePrimary} />
-        </View>
-        <ActivityIndicator size="small" color={Colors.bluePrimary} style={styles.spinner} />
-        <Text style={styles.title}>Activando cuenta</Text>
-        <Text style={styles.subtitle}>
-          Esto puede tardar unos momentos mientras restauramos tu wallet de forma segura.
-        </Text>
-      </View>
-    </View>
-  );
-}
+import { WalletActivationOverlay } from "@/src/components/wallet/WalletActivationOverlay";
+import { WalletActivationStep } from "@/src/utils/walletActivation";
+import * as Haptics from "expo-haptics";
 
 export default function WalletRestoreScreen() {
   const router = useRouter();
-  const [recoveryPassword, setRecoveryPassword] = useState("");
+  const [words, setWords] = useState<string[]>(emptySeedWords);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [step, setStep] = useState<WalletActivationStep>("fetching");
   const [error, setError] = useState<string | null>(null);
   const [isPasteLoading, setIsPasteLoading] = useState(false);
   const goBackOrWallet = () => goBackOrReplace(router, "/(stack)/(tabs)/wallet");
 
   const handleRestore = async () => {
-    if (!recoveryPassword.trim()) {
-      setError("Ingresa tu contraseña de recuperación.");
+    if (!isSeedPhraseComplete(words)) {
+      setError("Completa las 12 palabras de tu respaldo. Revisa las que aparecen en rojo.");
       return;
     }
 
     try {
       setError(null);
+      setProgress(0);
+      setStep("fetching");
       setIsRestoring(true);
-      await restoreWalletBackupToDevice(recoveryPassword);
-      goBackOrWallet();
+      // On success the overlay shows its "activated" state and then calls handleActivationFinished.
+      await restoreWalletBackupToDevice(joinSeedWords(words), { onStep: setStep, onProgress: setProgress });
     } catch (restoreError) {
+      setIsRestoring(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       const message = restoreError instanceof Error ? restoreError.message : "No se pudo restaurar la wallet.";
       setError(message.includes("404") ? "Este usuario no tiene un backup de wallet disponible." : message);
-    } finally {
-      setIsRestoring(false);
     }
+  };
+
+  const handleActivationFinished = () => {
+    setIsRestoring(false);
+    goBackOrWallet();
   };
 
   const handlePaste = async () => {
     setIsPasteLoading(true);
     try {
-      const text = await Clipboard.getStringAsync();
-      if (text && text.trim()) {
-        setRecoveryPassword(text.trim());
+      const pasted = splitSeedWords(await Clipboard.getStringAsync());
+      if (pasted.length > 0) {
+        setWords(applyWordsAt(emptySeedWords(), 0, pasted).words);
         if (error) setError(null);
       }
     } catch (clipboardError) {
@@ -79,11 +75,11 @@ export default function WalletRestoreScreen() {
       >
         <ScrollView
           className="flex-1"
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View className="flex-1 px-5 pt-8 gap-6">
+          <View className="flex-1 px-5 pt-4 gap-5">
             <View className="items-center gap-4">
               <View className="w-16 h-16 rounded-full bg-primary/20 items-center justify-center">
                 <Ionicons name="shield-checkmark-outline" size={34} color={Colors.bluePrimary} />
@@ -96,33 +92,20 @@ export default function WalletRestoreScreen() {
               </Text>
             </View>
 
-            <FormField
-              width="w-full"
-              label="Códigos de respaldo"
-              placeholder="Escribe las 12 palabras"
-              value={recoveryPassword}
-              onChangeText={(text) => {
-                setRecoveryPassword(text);
-                if (error) setError(null);
-              }}
-              autoCapitalize="none"
-              icon={<Ionicons name="lock-closed-outline" size={24} color={Colors.textPrimary} />}
-              rightIcon={
-                <TouchableOpacity
-                  onPress={handlePaste}
-                  disabled={isPasteLoading}
-                  accessibilityLabel="Pegar desde portapapeles"
-                  accessibilityRole="button"
-                >
-                  {isPasteLoading ? (
-                    <ActivityIndicator size="small" color={Colors.bluePrimary} />
-                  ) : (
-                    <Ionicons name="clipboard-outline" size={24} color={Colors.bluePrimary} />
-                  )}
-                </TouchableOpacity>
-              }
-              error={error ?? undefined}
-            />
+            <View className="gap-2">
+              <Text className="text-text-primary font-libre-bold text-base">Códigos de respaldo</Text>
+              <SeedPhraseInput
+                words={words}
+                onChangeWords={(next) => {
+                  setWords(next);
+                  if (error) setError(null);
+                }}
+                onPasteFromClipboard={handlePaste}
+                isPasting={isPasteLoading}
+                disabled={isRestoring}
+              />
+              {error && <Text className="text-red text-xs">{error}</Text>}
+            </View>
 
             <View className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4">
               <Text className="text-yellow-800 text-xs leading-5">
@@ -140,56 +123,12 @@ export default function WalletRestoreScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {isRestoring && <RestoreLoadingOverlay />}
+      <WalletActivationOverlay
+        visible={isRestoring}
+        step={step}
+        derivationProgress={progress}
+        onFinished={handleActivationFinished}
+      />
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 999,
-  },
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 24,
-    padding: 32,
-    alignItems: "center",
-    marginHorizontal: 40,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.greenSecondary,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  spinner: {
-    marginBottom: 12,
-  },
-  title: {
-    fontFamily: "LibreFranklin-Bold",
-    fontSize: 20,
-    color: Colors.bluePrimary,
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontFamily: "LibreFranklin-Regular",
-    fontSize: 14,
-    color: Colors.textPrimary,
-    textAlign: "center",
-    lineHeight: 20,
-    paddingHorizontal: 8,
-  },
-});
