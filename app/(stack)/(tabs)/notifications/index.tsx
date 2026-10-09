@@ -124,7 +124,7 @@ export default function NotificationsScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-      ) : (
+      ) : notifications.length === 0 ? null : (
         <View>
           <TouchableOpacity
             className="flex-row items-center justify-center gap-2 rounded-xl border border-blue-primary/30 bg-white py-3.5"
