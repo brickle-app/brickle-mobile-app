@@ -13,7 +13,11 @@
     "postinstall": "node scripts/decode-google-services.js"
   },
   "jest": {
-    "preset": "jest-expo"
+    "preset": "jest-expo",
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/.claude/"
+    ]
   },
   "dependencies": {
     "@expo-google-fonts/libre-franklin": "^0.4.2",
