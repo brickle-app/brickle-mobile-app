@@ -1,6 +1,4 @@
 import { brickleClient } from "../lib/api/axios-brickle.client";
-import uuid from "react-native-uuid";
-import { BRICKLE_SOURCE } from "../utils/constants";
 import {
   GetUserAccounts,
   UserAccount,
@@ -17,10 +15,7 @@ export const createBankAccount = async (
       bankAccount,
       {
         headers: {
-          correlationId: uuid.v4(),
           user: email,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );
@@ -39,10 +34,7 @@ export const getAllBankAccounts = async (email: string, userId: string) => {
       `/api/UserBankAccount/user/${userId}`,
       {
         headers: {
-          correlationId: uuid.v4(),
           user: email,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );
@@ -59,10 +51,7 @@ export const deleteBankAccount = async (email: string, accountId: string) => {
       `/api/UserBankAccount/${accountId}`,
       {
         headers: {
-          correlationId: uuid.v4(),
           user: email,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );

@@ -1,6 +1,4 @@
 import { brickleClient } from "@/src/lib/api/axios-brickle.client";
-import { BRICKLE_SOURCE } from "../utils/constants";
-import uuid from "react-native-uuid";
 import * as ImagePicker from "expo-image-picker";
 import { sanitizeUploadImage } from "../utils/secureUpload";
 
@@ -18,10 +16,7 @@ export const uploadPaymentProof = async (
       formData,
       {
         headers: {
-          correlationId: uuid.v4(),
           user: user.email,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );

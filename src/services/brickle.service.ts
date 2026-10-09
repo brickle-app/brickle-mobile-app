@@ -6,8 +6,7 @@ import {
   BrickleUserUpdateRequest,
   BrickleUser,
 } from "../types/user.types";
-import uuid from "react-native-uuid";
-import { BRICKLE_SOURCE, APP_VERSION_CHECK_URL } from "../utils/constants";
+import { APP_VERSION_CHECK_URL } from "../utils/constants";
 import { AppVersionInfo } from "../types/app.types";
 import * as ImagePicker from "expo-image-picker";
 import { sanitizeUploadImage } from "../utils/secureUpload";
@@ -40,10 +39,7 @@ export class BrickleService {
         userData,
         {
           headers: {
-            correlationId: uuid.v4(),
             user: userData.email,
-            source: BRICKLE_SOURCE,
-            RequestDate: new Date().toISOString(),
           },
         }
       );
@@ -71,10 +67,7 @@ export class BrickleService {
         `/api/User/email/${email}`,
         {
           headers: {
-            correlationId: uuid.v4(),
             user: email,
-            source: BRICKLE_SOURCE,
-            RequestDate: new Date().toISOString(),
           },
         }
       );
@@ -111,10 +104,7 @@ export const updateUser = async (userData: BrickleUserUpdateRequest) => {
       },
       {
         headers: {
-          correlationId: uuid.v4(),
           user: userData.email,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );
@@ -167,10 +157,7 @@ export const signUserDocument = async (
       payload,
       {
         headers: {
-          correlationId: uuid.v4(),
           user: userEmail,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );
@@ -199,10 +186,7 @@ export const getInvestmentsGroupedByCategory = async (
       }&active=${active}`,
       {
         headers: {
-          correlationId: uuid.v4(),
           user: email,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );
@@ -230,10 +214,7 @@ export const getInvestmentsByUserId = async (email: string, userId: string) => {
       `/api/Investment/user/${userId}`,
       {
         headers: {
-          correlationId: uuid.v4(),
           user: email,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );
@@ -270,10 +251,7 @@ export const getAssetById = async (
   try {
     const response = await brickleClient.get<Asset>(`/api/Leasing/${assetId}`, {
       headers: {
-        correlationId: uuid.v4(),
         user: email,
-        source: BRICKLE_SOURCE,
-        RequestDate: new Date().toISOString(),
       },
     });
     return response.data;
@@ -307,10 +285,7 @@ export const uploadUserProfileImage = async (
       {
         headers: {
           ...buildMultipartUploadHeaders(),
-          correlationId: uuid.v4(),
           user: user.email,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );
@@ -367,10 +342,7 @@ export const getUserDocuments = async (
       `/api/User/${user.id}/documents`,
       {
         headers: {
-          correlationId: uuid.v4(),
           user: user.email,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );
@@ -402,10 +374,7 @@ export const uploadUserDocument = async (
       formData,
       {
         headers: {
-          correlationId: uuid.v4(),
           user: user.email,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );
@@ -449,10 +418,7 @@ export const getDiscoverAssets = async (
       `/api/Leasing/filter?categories=${categories}&page=1&limit=${limit}&active=${active}`,
       {
         headers: {
-          correlationId: uuid.v4(),
           user: email,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );
@@ -484,10 +450,7 @@ export const searchUser = async (
       `/api/User/search?searchTerm=${search}&excludeUserId=${userId}`,
       {
         headers: {
-          correlationId: uuid.v4(),
           user: email,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );
@@ -509,10 +472,7 @@ export const createContact = async (
       { contactId },
       {
         headers: {
-          correlationId: uuid.v4(),
           user: email,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );
@@ -539,10 +499,7 @@ export const getUserContacts = async (userId: string, email: string) => {
       `/api/User/${userId}/contacts`,
       {
         headers: {
-          correlationId: uuid.v4(),
           user: email,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );
@@ -575,10 +532,7 @@ export const commitFunds = async (
       commitFundsDto,
       {
         headers: {
-          correlationId: uuid.v4(),
           user: email,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );
@@ -615,10 +569,7 @@ export const getPortfolioByUserId = async (
       {
         timeout: 30000,
         headers: {
-          correlationId: uuid.v4(),
           user: email,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );
@@ -657,10 +608,7 @@ export const getPortfolioProjectionByUserId = async (
       `/api/Portfolio/projections?userId=${userId}&currentValue=${currentValue}&projectionMonths=${projectionMonths}&expectedAnnualReturn=${expectedAnnualReturn}&startDate=${startDate}${principalQs}`,
       {
         headers: {
-          correlationId: uuid.v4(),
           user: email,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );
@@ -693,10 +641,7 @@ export const claimRent = async (
       claimRentBody,
       {
         headers: {
-          correlationId: uuid.v4(),
           user: email,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );
@@ -724,10 +669,7 @@ export const getAmortization = async (
       `/api/Leasing/${leasingId}/amortization`,
       {
         headers: {
-          correlationId: uuid.v4(),
           user: email,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );
@@ -770,10 +712,7 @@ export async function notifyIncomingTransferToPeer(params: {
       },
       {
         headers: {
-          correlationId: uuid.v4() as string,
           user: params.senderEmail,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );

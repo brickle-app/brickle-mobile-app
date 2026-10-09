@@ -4,8 +4,6 @@ import {
   RechargeResponseDto,
   WithdrawResponseDto,
 } from "../types/finance.types";
-import uuid from "react-native-uuid";
-import { BRICKLE_SOURCE } from "../utils/constants";
 
 export const rechargeAccount = async (
   email: string,
@@ -17,10 +15,7 @@ export const rechargeAccount = async (
       createRechargeDto,
       {
         headers: {
-          correlationId: uuid.v4(),
           user: email,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );
@@ -41,10 +36,7 @@ export const withdrawAccount = async (
       createWithdrawDto,
       {
         headers: {
-          correlationId: uuid.v4(),
           user: email,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );

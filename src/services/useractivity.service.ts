@@ -1,6 +1,4 @@
 import { brickleClient } from "@/src/lib/api/axios-brickle.client";
-import { BRICKLE_SOURCE } from "../utils/constants";
-import uuid from "react-native-uuid";
 import { UserActivityLog, UserActivityLogResponse } from "../types/user.types";
 import { isAxiosError } from "axios";
 
@@ -14,10 +12,7 @@ export const createUserActivityLog = async (
       JSON.stringify(userActivityLog),
       {
         headers: {
-          correlationId: uuid.v4(),
           user: email,
-          source: BRICKLE_SOURCE,
-          RequestDate: new Date().toISOString(),
         },
       }
     );
@@ -55,10 +50,7 @@ export const getUserActivityLogs = async (
 
     const response = await brickleClient.get<UserActivityLogResponse>(url, {
       headers: {
-        correlationId: uuid.v4(),
         user: email,
-        source: BRICKLE_SOURCE,
-        RequestDate: new Date().toISOString(),
       },
     });
 
