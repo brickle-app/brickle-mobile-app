@@ -8,6 +8,7 @@ import { DiscoverAssetCardList } from "./DiscoverAssetCardList";
 import { groupAssetsByCategory, normalizeCategory } from "./discoverScreen.logic";
 import TrendingCarousel from "./TrendingCarousel";
 import { DiscoveryCategoryChip } from "./DiscoveryCategoryChip";
+import { TrendingAssetCardSkeleton } from "@/src/components/ui/skeleton";
 
 interface DiscoverTrendingSectionProps {
   topAssets: Asset[];
@@ -36,7 +37,11 @@ export const DiscoverTrendingSection = ({
       {errorMessage ? (
         <Text className="text-text-primary text-base font-libre-regular mx-4">{errorMessage}</Text>
       ) : loading ? (
-        <View className="px-4"><View className="flex-row bg-gray-200 rounded-2xl" style={{ height: 100 }} /></View>
+        <View className="gap-4">
+          <TrendingAssetCardSkeleton />
+          <TrendingAssetCardSkeleton />
+          <TrendingAssetCardSkeleton />
+        </View>
       ) : topAssets.length > 0 ? (
         <TrendingCarousel assets={topAssets} onAssetPress={onAssetPress} />
       ) : (

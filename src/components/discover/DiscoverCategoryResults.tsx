@@ -1,5 +1,6 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { Text, TouchableOpacity } from "react-native";
+import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { Asset } from "@/src/interfaces/investments.interface";
 import { getAssetListState } from "./discoverScreen.logic";
 import { DiscoverAssetCardList } from "./DiscoverAssetCardList";
@@ -33,7 +34,7 @@ export const DiscoverCategoryResults = ({
       : null;
 
     return (
-      <View className="items-center px-6 pt-10">
+      <Animated.View entering={FadeInDown.duration(280)} className="items-center px-6 pt-10">
         {matchedCategory ? (
           <DiscoveryCategoryChip category={matchedCategory} className="mb-5" />
         ) : null}
@@ -53,22 +54,25 @@ export const DiscoverCategoryResults = ({
         </Text>
 
         {onClearCategory ? (
-          <View
+          <TouchableOpacity
+            onPress={onClearCategory}
+            accessibilityRole="button"
+            accessibilityLabel="Ver todas las categorías"
             className="rounded-full bg-blue-primary/10 px-5 py-2.5"
           >
             <Text className="font-libre-bold text-sm text-blue-primary">
               Ver todas las categorías
             </Text>
-          </View>
+          </TouchableOpacity>
         ) : null}
-      </View>
+      </Animated.View>
     );
   }
 
   return (
-    <View>
+    <Animated.View entering={FadeIn.duration(220)}>
       <Text className="text-text-primary text-lg font-libre-regular mx-4 mb-4">Resultados</Text>
       <DiscoverAssetCardList assets={assets} loading={state === "loading"} onAssetPress={onAssetPress} />
-    </View>
+    </Animated.View>
   );
 };

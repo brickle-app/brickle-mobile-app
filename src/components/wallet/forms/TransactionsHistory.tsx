@@ -15,6 +15,8 @@ export interface Transaction {
   description: string;
   date: string;
   amount: number;
+  /** ISO timestamp of the movement, used to group the history by day. */
+  occurredAt?: string;
 }
 
 
@@ -37,17 +39,20 @@ export const renderTransactionItem = ({ item }: { item: Transaction }) => {
   const isDeduction = item.type === "deduction";
 
   return (
-    <View className="flex-row items-center py-3 px-4 h-[67px]" style={styles.container}>
+    <View className="flex-row items-center py-3 px-4 min-h-[67px]" style={styles.container}>
       <View className="h-10 w-10 items-center justify-center mr-3">
         {icon}
       </View>
-      <View className="flex-1">
-        <Text className="font-libre-regular">{item.description}</Text>
-        <Text className="text-sm text-gray-500">{item.date}</Text>
+      <View className="flex-1 mr-3">
+        <Text className="font-libre-regular text-sm" numberOfLines={2} ellipsizeMode="tail">
+          {item.description}
+        </Text>
+        <Text className="text-xs text-gray-500 mt-0.5">{item.date}</Text>
       </View>
       <Text
         className="font-libre-bold"
-        style={isDeduction ? { color: Colors.red } : undefined}
+        numberOfLines={1}
+        style={[{ flexShrink: 0 }, isDeduction ? { color: Colors.red } : null]}
       >
         {isDeduction ? "-" : ""}
         {formatCurrency(Math.abs(item.amount))}

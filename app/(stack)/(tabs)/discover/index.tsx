@@ -2,6 +2,7 @@ import React, { useCallback, useMemo } from "react";
 import { RefreshControl, SafeAreaView, ScrollView, Text, View } from "react-native";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useRouter } from "expo-router";
+import * as Haptics from "expo-haptics";
 import BackGroundGradient from "@/src/components/ui/backgroundGradient/BackGroundGradient";
 import SearchBar from "@/src/components/discover/SearchBar";
 import CategoryChips from "@/src/components/discover/CategoryChips";
@@ -39,6 +40,14 @@ const DiscoverScreen = () => {
     handleCategoryPress(null);
   }, [handleCategoryPress]);
 
+  const handleCategorySelect = useCallback(
+    (category: string | null) => {
+      Haptics.selectionAsync().catch(() => {});
+      handleCategoryPress(category);
+    },
+    [handleCategoryPress]
+  );
+
   return (
     <SafeAreaView className="flex-1">
       <BackGroundGradient variant="discover" />
@@ -57,7 +66,7 @@ const DiscoverScreen = () => {
           <CategoryChips
             categories={mockCategories}
             selectedCategories={selectedCategories || []}
-            onCategoryPress={handleCategoryPress}
+            onCategoryPress={handleCategorySelect}
           />
           {selectedCategories !== null && assets.length > 0 && (
             <Text className="text-text-primary text-base font-libre-bold mx-4 mt-2">

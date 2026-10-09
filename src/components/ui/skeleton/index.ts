@@ -7,3 +7,4 @@ export { AssetsSuggestCarouselSkeleton } from './AssetsSuggestCarouselSkeleton';
 export { TrendingAssetCardSkeleton } from './TrendingAssetCardSkeleton';
 export { BalanceCardSkeleton } from './BalanceCardSkeleton';
 export { LeasingDetailScreenSkeleton } from './LeasingDetailScreenSkeleton';
+export { TransactionRowSkeleton } from './TransactionRowSkeleton';
