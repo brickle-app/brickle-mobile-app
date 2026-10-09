@@ -46,3 +46,8 @@ export function parseCopAmountFromText(raw: string | number): number {
   if (digits.length > 0) return Number.parseInt(digits, 10) || 0;
   return Number.parseFloat(compact.replace(",", ".")) || 0;
 }
+
+/** Formats a balance coming from the wallet/API (e.g. "993455630.55") as es-CO pesos without dropping the decimal point. */
+export function formatCopBalance(raw: string | number | null | undefined): string {
+  return parseCopAmountFromText(raw ?? 0).toLocaleString("es-CO");
+}

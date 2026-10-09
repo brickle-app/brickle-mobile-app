@@ -13,7 +13,7 @@ import { getPrivateKey } from '@/src/services/auth.service';
 import { WalletKeyUnlockError } from '@/src/services/wallet-key-storage.service';
 import { useBlockchainConfigStore } from '@/src/store/blockchainConfig.store';
 import OperationStatusModal from '../OperationStatusModal';
-import { formatColombianPesos, parseCopAmountFromText } from '@/src/utils/formatCurrency';
+import { formatColombianPesos, formatCopBalance, parseCopAmountFromText } from '@/src/utils/formatCurrency';
 import { Alert } from 'react-native';
 import { withdrawAccount } from '@/src/services/finance.service';
 
@@ -276,7 +276,7 @@ export const WithdrawForm = ({ setIsModalVisible }: { setIsModalVisible: (visibl
           <FormField
             width='w-full'
             label="Ingrese el monto a retirar"
-            description={`Saldo disponible: $${formatColombianPesos(balance || '0')} • Mínimo: $100.000`}
+            description={`Saldo disponible: $${formatCopBalance(balance)} • Mínimo: $100.000`}
             placeholder="0.00"
             value={formatColombianPesos(amount)}
             onChangeText={handleAmountChange}
