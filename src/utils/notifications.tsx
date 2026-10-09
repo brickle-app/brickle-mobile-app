@@ -4,7 +4,8 @@ import Constants from 'expo-constants';
 import { Platform } from "react-native";
 
 function handleRegistrationError(errorMessage: string) {
-  alert(errorMessage);
+  // Never block the user with a modal for push registration: callers handle the thrown error.
+  console.warn(`[push] ${errorMessage}`);
   throw new Error(errorMessage);
 }
 

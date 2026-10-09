@@ -18,7 +18,8 @@ import { AuthErrorModal } from "@/src/components/ui/modal/AuthErrorModal";
 
 const LoginScreen = () => {
   const { handleLogin, showAuthError, handleRetryLogin, handleCloseError } = useGoogleAuth();
-  const { handleEmailLogin, setEmail, isLoading } = useEmailAuth();
+  const { handleEmailLogin, setEmail, isLoading, otpStatus } = useEmailAuth();
+  const sendError = otpStatus && !otpStatus.success && typeof otpStatus.error === "string" ? otpStatus.error : undefined;
 
   const { errors, validateField, validateForm, handleChange, formData } =
     useLoginForm();
@@ -71,7 +72,7 @@ const LoginScreen = () => {
                     color={Colors.primary}
                   />
                 }
-                error={errors.email}
+                error={errors.email ?? sendError}
                 onChangeText={handleEmailChange}
                 value={formData.email}
               />

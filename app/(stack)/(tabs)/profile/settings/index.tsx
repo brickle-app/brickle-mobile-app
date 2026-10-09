@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Switch } from "react-native";
+import { View, Text, ScrollView, Switch, Alert } from "react-native";
 import React, { useState } from "react";
 import BackGroundGradient from "@/src/components/ui/backgroundGradient/BackGroundGradient";
 import UserHeader from "@/src/components/user/UserHeader";
@@ -58,7 +58,17 @@ const SettingsScreen = () => {
   }
 
   const handleNotificationsToken = async () => {
-    const token = await registerForPushNotificationsAsync();
+    let token: string | undefined;
+    try {
+      token = await registerForPushNotificationsAsync();
+    } catch {
+      setNotificationsPushModalVisible(false);
+      Alert.alert(
+        "No pudimos activar las notificaciones",
+        "Revisa que hayas permitido las notificaciones para Brickle en los ajustes de tu dispositivo."
+      );
+      return;
+    }
     if (token) {
       setPushNotificationsEnabled(true);
       await updateUser({

@@ -14,6 +14,18 @@ WebBrowser.maybeCompleteAuthSession();
 const REFRESH_TOKEN_STORAGE_KEY = "brickle_refresh_token";
 
 const BRICKLE_API_URL = process.env.EXPO_PUBLIC_BRICKLE_API_URL;
+const AUTH_REQUEST_TIMEOUT_MS = 15000;
+
+/** fetch that aborts after a timeout so the UI never stays loading forever on an unreachable server. */
+const fetchWithTimeout = async (url: string, init: RequestInit, timeoutMs = AUTH_REQUEST_TIMEOUT_MS) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+};
 const MISSING_GOOGLE_CLIENT_ID = "missing-google-client-id";
 
 function configuredClientId(clientId: string | undefined) {
@@ -186,7 +198,7 @@ export const useGoogleAuth = () => {
   const completeGoogleLogin = useCallback(async (idToken: string) => {
     console.log("[GoogleAuth] Got id_token, exchanging with backend...");
 
-    const res = await fetch(`${BRICKLE_API_URL}/api/auth/google`, {
+    const res = await fetchWithTimeout(`${BRICKLE_API_URL}/api/auth/google`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ idToken, clientId: getGoogleAuthBackendClientId(process.env, Platform.OS) }),
@@ -314,7 +326,7 @@ export const useEmailAuth = () => {
 
     setIsLoading(true);
     try {
-      const res = await fetch(`${BRICKLE_API_URL}/api/auth/send-otp`, {
+      const res = await fetchWithTimeout(`${BRICKLE_API_URL}/api/auth/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -327,16 +339,27 @@ export const useEmailAuth = () => {
         router.push("/verify-otp");
         setOtpStatus({ success: true, data });
       } else {
-        setOtpStatus({ success: false, error: data });
+        setOtpStatus({
+          success: false,
+          error: data?.error ?? "No pudimos enviar el código. Inténtalo de nuevo.",
+        });
       }
-    } catch (error) {
-      setOtpStatus({ success: false, error });
+    } catch {
+      setOtpStatus({
+        success: false,
+        error: "No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.",
+      });
     } finally {
       setIsLoading(false);
     }
   }, [email, setUserEmail, router]);
 
-  return { handleEmailLogin, isLoading, setEmail, otpStatus };
+  const updateEmail = useCallback((value: string) => {
+    setEmail(value);
+    setOtpStatus(null);
+  }, []);
+
+  return { handleEmailLogin, isLoading, setEmail: updateEmail, otpStatus };
 };
 
 export const useVerifyOtp = () => {
@@ -361,7 +384,7 @@ export const useVerifyOtp = () => {
 
     setIsLoading(true);
     try {
-      const res = await fetch(`${BRICKLE_API_URL}/api/auth/verify-otp`, {
+      const res = await fetchWithTimeout(`${BRICKLE_API_URL}/api/auth/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: userEmail, otp }),
@@ -477,7 +500,7 @@ export const refreshToken = async (): Promise<{ success: boolean; newToken?: str
 
     return { success: true, newToken: data.accessToken };
   } catch (error) {
-    console.error("Refresh token error:", error);
+    console.warn("Refresh token error:", error);
     return { success: false };
   }
 };
