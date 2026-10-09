@@ -34,11 +34,11 @@ export const SessionExpiredModal: React.FC<SessionExpiredModalProps> = ({
             </View>
 
             <Text className="text-blue-primary font-libre-bold text-base text-center mb-2">
-              Sesión Expirada
+              Cerramos tu sesión por seguridad
             </Text>
 
             <Text className="text-text-primary font-libre-regular text-sm text-center">
-              Tu sesión ha expirado por seguridad. Por favor, inicia sesión nuevamente para continuar.
+              Pasó un tiempo sin actividad o tu sesión venció. Tu wallet sigue protegida en este dispositivo; inicia sesión para continuar.
             </Text>
           </View>
 

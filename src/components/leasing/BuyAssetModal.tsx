@@ -93,8 +93,8 @@ export const BuyAssetModal: BuyAssetModalComponent = ({
     onRequestClose();
   };
 
+  // The step resets when the modal opens again; resetting here would flash the preview during the fade-out.
   const handleComplete = () => {
-    setCurrentStep('preview');
     onComplete();
   };
 
