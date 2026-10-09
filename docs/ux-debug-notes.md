@@ -67,3 +67,14 @@ Estado: ✅ corregido en esta sesión · 🔶 recomendado · 🔧 requiere traba
 - 🔶 Explorar: el botón de filtro de la barra de búsqueda no hace nada (`onFilterPress={() => ({})}`).
 - 🔶 Movimientos: la descripción viene de `reference` del backend ("Compra de X - 1 tokens"): mostrar "1 brick" y el nombre del activo por separado.
 
+## Seguimiento (sesión 2)
+- ✅ "Portafolio $0" y "Balance = Capital total": no eran datos perdidos. El backend sí escribe la inversión al comprar. La causa es el timeout de `/Portfolio/overview` (63 s con el backend viejo, la app corta a los 30 s) y `Capital total = saldo + totalInvested`. Se corrige al reiniciar el backend con `perf: speed up portfolio overview…`.
+- ✅ Modal de compra: con una compra simulada (sin mover dinero) cierra y navega a Portafolio correctamente; el síntoma anterior no se reproduce. Se quitó el parpadeo de "preview" durante el fade-out.
+- ✅ Texto de sesión: "Cerramos tu sesión por seguridad…" (cubre inactividad y vencimiento).
+- ✅ Backend: `/health` y `/health/ready` (comprueba la BD) sin autenticación.
+- ✅ Cabeceras `correlationId/source/RequestDate` movidas al interceptor de axios (28 llamadas); los servicios solo envían `user`.
+- ✅ Movimientos muestra "1 brick/N bricks"; la tendencia de Explorar se cachea por usuario (se muestra al instante y se refresca en segundo plano).
+- 🔶 Decisión de producto/seguridad: al cerrar sesión por inactividad se borra el PIN aunque se conserve la llave de la wallet. Conservarlo evitaría pedirlo de nuevo, pero otra cuenta en el mismo teléfono heredaría ese PIN.
+- 🔶 Aviso de Reanimated "`.value` inside inline style": no proviene de componentes propios que usen `useSharedValue`; probablemente NativeWind o una librería de gráficos. Sin pila no se pudo localizar.
+- 🔧 `scrypt` nativo (`react-native-quick-crypto`): requiere dependencia nativa, `pod install` y recompilar.
+
