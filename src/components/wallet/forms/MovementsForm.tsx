@@ -12,6 +12,7 @@ import { getUserActivityLogs } from "@/src/services/useractivity.service";
 import { authStore } from "@/src/store/auth.store";
 import { UserActivityLog } from "@/src/types/user.types";
 import { groupTransactionsByDay } from "@/src/utils/transactionGroups";
+import { formatMovementDescription } from "@/src/utils/movementDescription";
 
 const RANGE_OPTIONS = [7, 15, 30, 60, 90];
 
@@ -45,11 +46,7 @@ const mapUserActivityLogToTransaction = (log: UserActivityLog, index: number): T
   return {
     id: `${log.userId}-${index}`, // Generate unique ID
     type: getTransactionType(log.type),
-    description: (log.reference || `${log.type.toLowerCase().replace('-', ' ')}`)
-      .replace(/Inversi[óo]n\s+en/gi, "Compra de")
-      .replace(/Inversi[óo]n/gi, "Compra")
-      .replace(/\[Intereses\]/gi, "[Rendimiento]")
-      .replace(/Intereses/gi, "Rendimiento"),
+    description: formatMovementDescription(log.reference || `${log.type.toLowerCase().replace('-', ' ')}`),
     date: formatDate(log.timestamp || new Date().toISOString()),
     amount: Math.round(log.txAmount),
     occurredAt: log.timestamp ? new Date(log.timestamp).toISOString() : undefined,

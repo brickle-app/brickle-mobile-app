@@ -8,7 +8,7 @@ import { AddAccountModal } from '@/src/components/wallet/modals/AddAccountModal'
 import { DeleteConfirmationModal } from '@/src/components/wallet/modals/DeleteConfirmationModal';
 import { GetUserAccounts } from '@/src/types/user-account';
 import { getAllBankAccounts, deleteBankAccount } from '@/src/services/account.service';
-import { authStore, persistPrivateKeyToSecureStore } from '@/src/store/auth.store';
+import { authStore } from '@/src/store/auth.store';
 import { getPrivateKey } from '@/src/services/auth.service';
 import { WalletKeyUnlockError } from '@/src/services/wallet-key-storage.service';
 import { useBlockchainConfigStore } from '@/src/store/blockchainConfig.store';
