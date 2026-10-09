@@ -2,15 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { Colors } from "@/assets/Colors";
 import { formatCurrency } from "@/src/utils/formatCurrency";
 import { Ionicons } from "@expo/vector-icons";
-import { Modal, View, Text, TouchableOpacity, Image, Dimensions, ActivityIndicator } from "react-native";
+import { Modal, View, Text, TouchableOpacity, Image, Dimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, {
+  FadeInDown,
+  ZoomIn,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
+import * as Haptics from "expo-haptics";
 import { SwipeToPurchaseBottomSheet } from "./SwipeToPurchaseBottomSheet";
+import { PurchaseProcessingScreen } from "./PurchaseProcessingScreen";
+import { PurchaseStep } from "@/src/utils/purchaseProgress";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-type PurchaseStep = 'preview' | 'processing' | 'complete' | 'error';
+type ModalStep = 'preview' | 'processing' | 'complete' | 'error';
+
+const bricksLabel = (count: number) => `${count} ${count === 1 ? 'brick' : 'bricks'}`;
+
+/** How long the finished checklist stays visible before the receipt slides in. */
+const SUCCESS_HOLD_MS = 750;
 
 interface BuyAssetModalProps {
   visible: boolean;
@@ -19,14 +33,13 @@ interface BuyAssetModalProps {
   bricksCount: number;
   assetName: string;
   pricePerToken: number;
-  onPurchase: () => Promise<boolean>;
+  onPurchase: (onStep: (step: PurchaseStep) => void) => Promise<boolean>;
   onComplete: () => void;
   isLoading: boolean;
 }
 
 interface BuyAssetModalComponent extends React.FC<BuyAssetModalProps> {
   Preview: typeof Preview;
-  Processing: typeof Processing;
   ResultTransition: typeof ResultTransition;
   Complete: typeof Complete;
   Error: typeof Error;
@@ -44,7 +57,8 @@ export const BuyAssetModal: BuyAssetModalComponent = ({
   isLoading
 }) => {
   const insets = useSafeAreaInsets();
-  const [currentStep, setCurrentStep] = useState<PurchaseStep>('preview');
+  const [currentStep, setCurrentStep] = useState<ModalStep>('preview');
+  const [purchaseStep, setPurchaseStep] = useState<PurchaseStep>('authorizing');
 
   // Reset state when modal opens
   useEffect(() => {
@@ -58,12 +72,16 @@ export const BuyAssetModal: BuyAssetModalComponent = ({
 
   /** Cuando el swiper terminó de subir: pasamos a pantalla de procesamiento y lanzamos la compra. */
   const handleExpandComplete = async () => {
+    setPurchaseStep('authorizing');
     setCurrentStep('processing');
-    const success = await onPurchase();
+    const success = await onPurchase(setPurchaseStep);
     if (!success) {
       setCurrentStep('error');
       return;
     }
+    // Let the user see every step checked before the receipt appears.
+    setPurchaseStep('done');
+    await new Promise((resolve) => setTimeout(resolve, SUCCESS_HOLD_MS));
     setCurrentStep('complete');
   };
 
@@ -105,7 +123,10 @@ export const BuyAssetModal: BuyAssetModalComponent = ({
               </View>
             )}
             {currentStep === 'processing' && (
-              <BuyAssetModal.Processing />
+              <PurchaseProcessingScreen
+                step={purchaseStep}
+                summary={`${bricksLabel(bricksCount)} · ${formatCurrency(pricePerToken * bricksCount)}`}
+              />
             )}
             {currentStep === 'preview' && (
               <View className="bg-white rounded-t-3xl mx-4 min-h-[70%] relative">
@@ -226,53 +247,6 @@ const Preview: React.FC<PreviewPurchaseProps> = ({
   );
 };
 
-const LOGO_MAX_W = 72;
-const LOGO_MAX_H = 112;
-
-const Processing: React.FC = () => {
-  const insets = useSafeAreaInsets();
-  return (
-    <View
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: Colors.greenPrimary,
-        paddingTop: Math.max(insets.top, 16),
-        paddingBottom: Math.max(insets.bottom, 24),
-        paddingHorizontal: 24,
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
-      <View
-        style={{
-          width: LOGO_MAX_W,
-          height: LOGO_MAX_H,
-          marginBottom: 24,
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <Image
-          source={require("@/assets/logos/simple-logo-purple.png")}
-          style={{ width: LOGO_MAX_W, height: LOGO_MAX_H }}
-          resizeMode="contain"
-        />
-      </View>
-      <Text className="text-blue-primary font-libre-bold text-xl mb-4 text-center">
-        Procesando compra
-      </Text>
-      <Text className="text-blue-primary font-libre-regular text-base mb-8 opacity-90 text-center px-2">
-        Estamos confirmando tu inversión
-      </Text>
-      <ActivityIndicator size="large" color={Colors.bluePrimary} />
-    </View>
-  );
-};
-
 const ResultTransition: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(24);
@@ -302,16 +276,33 @@ const Complete: React.FC<CompletePurchaseProps> = (
     onRequest,
   }
 ) => {
+  React.useEffect(() => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+  }, []);
+
   return (<View className="p-8 pb-36">
     <View className="flex items-center justify-between">
-      <Image source={require("@/assets/logos/simple-logo-purple.png")} className="w-8 h-14" />
-      <Text className="text-blue-primary font-libre-bold text-2xl mt-8">Compra Realizada</Text>
+      <Animated.View
+        entering={ZoomIn.springify().damping(12)}
+        className="w-16 h-16 rounded-full bg-green-primary items-center justify-center"
+      >
+        <Ionicons name="checkmark" size={36} color={Colors.bluePrimary} />
+      </Animated.View>
+      <Animated.Text
+        entering={FadeInDown.delay(120).duration(360)}
+        className="text-blue-primary font-libre-bold text-2xl mt-8"
+      >
+        Compra realizada
+      </Animated.Text>
       <Text className="text-text-primary text-center font-libre-bold text-base mt-2">
-        Tu compra de {bricksCount} bricks de "{assetName}" ha sido completada con éxito.
+        Tu compra de {bricksLabel(bricksCount)} de "{assetName}" ha sido completada con éxito.
       </Text>
     </View>
 
-    <View className="flex w-full justify-between max-w-[80%] mx-auto mt-8">
+    <Animated.View
+      entering={FadeInDown.delay(240).duration(420)}
+      className="flex w-full justify-between max-w-[80%] mx-auto mt-8"
+    >
       <View className="flex-row items-center justify-between">
         <Text className="text-text-primary font-libre-bold text-base mr-2">
           Estatus compra
@@ -344,7 +335,7 @@ const Complete: React.FC<CompletePurchaseProps> = (
           {new Date().toLocaleDateString()}
         </Text>
       </View>
-    </View>
+    </Animated.View>
 
     <TouchableOpacity
       className="bg-green-primary rounded-full py-3 px-6 mt-8 self-center"
@@ -363,6 +354,10 @@ const Error: React.FC<ErrorPurchaseProps> = ({
   pricePerToken,
   onRetry
 }) => {
+  React.useEffect(() => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+  }, []);
+
   return (
     <>
       <View className="p-8 pb-36">
@@ -370,7 +365,7 @@ const Error: React.FC<ErrorPurchaseProps> = ({
           <Ionicons name="alert-circle" size={48} color={Colors.red} />
           <Text className="text-red font-libre-bold text-2xl mt-8">Error en la compra</Text>
           <Text className="text-text-primary font-libre-bold text-base mt-2 text-center">
-            No pudimos procesar tu compra de {bricksCount} bricks de "{assetName}".
+            No pudimos procesar tu compra de {bricksLabel(bricksCount)} de "{assetName}".
             Por favor, intenta nuevamente.
           </Text>
         </View>
@@ -424,7 +419,6 @@ const Error: React.FC<ErrorPurchaseProps> = ({
 };
 
 BuyAssetModal.Preview = Preview;
-BuyAssetModal.Processing = Processing;
 BuyAssetModal.ResultTransition = ResultTransition;
 BuyAssetModal.Complete = Complete;
 BuyAssetModal.Error = Error;

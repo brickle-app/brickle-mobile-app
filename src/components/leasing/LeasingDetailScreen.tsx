@@ -18,6 +18,7 @@ import { Colors } from "@/assets/Colors";
 import { PartialBrickleUser } from "@/src/types/user.types";
 import { AuthErrorModal } from "@/src/components/ui/modal/AuthErrorModal";
 import { purchaseLeasingAsset } from "./leasingPurchase";
+import { PurchaseStep } from "@/src/utils/purchaseProgress";
 
 interface LeasingDetailScreenProps {
   assetId: string;
@@ -66,12 +67,18 @@ export const LeasingDetailScreen = ({
     refreshAssetData();
   }, [assetId, refreshAssetData]);
 
-  const handleOnPurchase = async (userParam: PartialBrickleUser, tokens: number, pricePerToken: number) => {
+  const handleOnPurchase = async (
+    userParam: PartialBrickleUser,
+    tokens: number,
+    pricePerToken: number,
+    onStep?: (step: PurchaseStep) => void
+  ) => {
     return purchaseLeasingAsset({
       user: userParam,
       tokens,
       pricePerToken,
       handleBuyAsset,
+      onStep,
       onMissingPrivateKey: () => {
         setWalletAction("restore");
         setIsBuyAssetModalVisible(false);
@@ -199,7 +206,7 @@ export const LeasingDetailScreen = ({
         bricksCount={bricksCount}
         assetName={asset.name}
         pricePerToken={asset.pricePerToken}
-        onPurchase={() => handleOnPurchase(user as PartialBrickleUser, bricksCount, asset?.pricePerToken)}
+        onPurchase={(onStep) => handleOnPurchase(user as PartialBrickleUser, bricksCount, asset?.pricePerToken, onStep)}
         onComplete={() => {
           setIsBuyAssetModalVisible(false);
           setTimeout(() => {

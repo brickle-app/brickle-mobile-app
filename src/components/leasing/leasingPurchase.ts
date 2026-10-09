@@ -1,11 +1,13 @@
 import { ensureWalletReadyForSigning } from "@/src/services/wallet-security-gate.service";
 import { PartialBrickleUser } from "@/src/types/user.types";
+import { PurchaseStep } from "@/src/utils/purchaseProgress";
 
 type HandleBuyAsset = (
   email: string,
   walletAddress: string,
   tokens: number,
-  amount: number
+  amount: number,
+  onStep?: (step: PurchaseStep) => void
 ) => Promise<{ success: boolean }>;
 
 interface PurchaseLeasingAssetParams {
@@ -15,6 +17,8 @@ interface PurchaseLeasingAssetParams {
   handleBuyAsset: HandleBuyAsset;
   onMissingPrivateKey: () => void;
   onWalletUpgradeRequired: () => void;
+  /** Reports the real phase of the purchase so the UI can show where it is. */
+  onStep?: (step: PurchaseStep) => void;
 }
 
 export async function purchaseLeasingAsset({
@@ -24,6 +28,7 @@ export async function purchaseLeasingAsset({
   handleBuyAsset,
   onMissingPrivateKey,
   onWalletUpgradeRequired,
+  onStep,
 }: PurchaseLeasingAssetParams) {
   if (!user) {
     console.error("❌ No user data available for purchase");
@@ -40,6 +45,7 @@ export async function purchaseLeasingAsset({
     return false;
   }
 
+  onStep?.("authorizing");
   const readiness = await ensureWalletReadyForSigning();
   if (readiness.status === "upgradeRequired") {
     console.warn("Secure wallet backup not found. Wallet upgrade is required.");
@@ -63,7 +69,9 @@ export async function purchaseLeasingAsset({
     user.email,
     user.walletAddress,
     tokens,
-    tokens * pricePerToken
+    tokens * pricePerToken,
+    onStep
   );
+  onStep?.("done");
   return success;
 }

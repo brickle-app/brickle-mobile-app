@@ -34,6 +34,8 @@ describe("purchaseLeasingAsset", () => {
     const handleBuyAsset = jest.fn().mockResolvedValue({ success: true });
     jest.mocked(SecureStore.getItemAsync).mockResolvedValueOnce("0xprivate-key");
 
+    const steps: string[] = [];
+    const onStep = (step: string) => steps.push(step);
     const result = await purchaseLeasingAsset({
       user: {
         email: "ada@example.com",
@@ -42,13 +44,16 @@ describe("purchaseLeasingAsset", () => {
       tokens: 2,
       pricePerToken: 100,
       handleBuyAsset,
+      onStep,
       onMissingPrivateKey: jest.fn(),
       onWalletUpgradeRequired: jest.fn(),
     });
 
     expect(result).toBe(true);
     expect(ensureWalletReadyForSigning).toHaveBeenCalledWith();
-    expect(handleBuyAsset).toHaveBeenCalledWith("ada@example.com", "0xabc", 2, 200);
+    expect(handleBuyAsset).toHaveBeenCalledWith("ada@example.com", "0xabc", 2, 200, onStep);
+    // handleBuyAsset (mocked) reports signing/confirming itself; the gate and the final step come from here.
+    expect(steps).toEqual(["authorizing", "done"]);
   });
 
   it("asks for wallet recovery without triggering a redbox when no private key exists", async () => {

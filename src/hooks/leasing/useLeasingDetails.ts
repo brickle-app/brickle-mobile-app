@@ -4,6 +4,7 @@ import { authStore } from "@/src/store/auth.store";
 import { useBlockchainConfigStore } from "@/src/store/blockchainConfig.store";
 import { useOnRefreshTriggerIncrement } from "@/src/hooks/useOnRefreshTriggerIncrement";
 import { PurchaseState, TabType } from "@/src/types/leasing.types";
+import { PurchaseStep } from "@/src/utils/purchaseProgress";
 import { generatePermit } from "@/src/utils/generatePermit";
 import { checkSessionError } from "@/src/utils/sessionManager";
 import { useCallback, useState, useEffect } from "react";
@@ -30,9 +31,11 @@ export const useLeasingDetails = (assetId: string) => {
     email: string,
     walletAddress: string,
     bricksCount: number,
-    amount: number
+    amount: number,
+    onStep?: (step: PurchaseStep) => void
   ) => {
     setPurchaseLoading(true);
+    onStep?.("signing");
     const { baseToken: tokenAddress, paymasterAddress } =
       await useBlockchainConfigStore.getState().fetchConfig();
 
@@ -57,6 +60,7 @@ export const useLeasingDetails = (assetId: string) => {
         },
       };
 
+      onStep?.("confirming");
       const result = await commitFunds(assetId, email, commitFundsDto);
       setPurchaseLoading(false);
       return { success: result };
