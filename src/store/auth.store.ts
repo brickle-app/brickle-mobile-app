@@ -126,6 +126,8 @@ export const authStore = create<State>()(
         try {
           set({ user });
           console.log("✅ User updated successfully");
+          // A PIN is only valid for the account that created it; this never unlocks the app.
+          if (user?.email) void usePinStore.getState().reconcileOwner(user.email);
         } catch (error) {
           console.error("❌ Error setting user:", error);
           set({ error: "Failed to set user" });
@@ -182,7 +184,9 @@ export const authStore = create<State>()(
       },
       logout: async (options) => {
         try {
-          await usePinStore.getState().removePin();
+          // Keep the PIN (it is bound to its owner's email) so the user is not asked to create it on
+          // every sign-in. Leave the app unlocked so the login screen is not redirected to the PIN lock.
+          usePinStore.getState().unlock();
           await Promise.allSettled([
             // Session expiry keeps the device signing key so the user does not have to
             // restore the wallet; it is checked against the account wallet before signing.

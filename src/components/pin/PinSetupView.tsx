@@ -11,6 +11,7 @@ import { router } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import { PinInput } from "@/src/components/ui/pin/PinInput";
 import { usePinStore } from "@/src/store/pin.store";
+import { authStore } from "@/src/store/auth.store";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/assets/Colors";
 
@@ -46,7 +47,7 @@ export function PinSetupView({ mandatory = false }: PinSetupViewProps) {
   const handleConfirmComplete = async (value: string) => {
     if (value === pin) {
       try {
-        await storePin(value);
+        await storePin(value, authStore.getState().user?.email);
         if (mandatory) {
           goToDashboard();
         } else {

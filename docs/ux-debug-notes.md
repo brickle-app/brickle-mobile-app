@@ -78,3 +78,8 @@ Estado: ✅ corregido en esta sesión · 🔶 recomendado · 🔧 requiere traba
 - 🔶 Aviso de Reanimated "`.value` inside inline style": no proviene de componentes propios que usen `useSharedValue`; probablemente NativeWind o una librería de gráficos. Sin pila no se pudo localizar.
 - 🔧 `scrypt` nativo (`react-native-quick-crypto`): requiere dependencia nativa, `pod install` y recompilar.
 
+## PIN (sesión 3)
+- ✅ El PIN ya no se borra al cerrar sesión (ni manual ni por inactividad). Queda **atado al correo** que lo creó: si entra otra cuenta en el mismo teléfono se descarta, y un PIN anterior sin dueño se asigna a la cuenta activa. Un `reset` completo sigue borrándolo.
+- ✅ Ya bloqueaba al ir a segundo plano y al volver ("Sesión bloqueada"); verificado en el simulador.
+- 🔶 La pantalla de bloqueo no limita intentos: se pueden probar PIN ilimitados. Añadir bloqueo temporal tras N fallos (p. ej. 5 → 30 s, creciente) y cierre de sesión tras 10.
+
