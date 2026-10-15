@@ -1,7 +1,6 @@
 import React from "react";
 import { Text, View } from "react-native";
 import { PerformanceMetrics as PerformanceMetricsType } from "@/src/types/leasing.types";
-import { formatCurrency } from "@/src/utils/formatCurrency";
 import { differenceInMonths } from "@/src/utils/dateUtils";
 import { RiskLevelLabeled } from "@/src/components/ui/risk-level/AssetRiskLevel";
 import { Colors } from "@/assets/Colors";
@@ -67,21 +66,14 @@ export const PerformanceMetrics = ({ metrics, mainColor }: PerformanceMetricsPro
           <View className="flex-row justify-between mt-5">
             <View className="flex-1 pr-4">
               <Text className="text-base font-libre-medium text-text-primary mb-1">
-                Retorno total
-              </Text>
-              <Text className="text-sm font-libre-regular text-gray-600">
-                {formatCurrency(parseFloat(metrics.totalReturn))}
-              </Text>
-            </View>
-
-            <View className="flex-1 pl-4">
-              <Text className="text-base font-libre-medium text-text-primary mb-1">
                 Liquidez
               </Text>
               <Text className="text-sm font-libre-regular text-gray-600">
                 {metrics.liquidity}
               </Text>
             </View>
+
+            <View className="flex-1 pl-4" />
           </View>
         </View>
       </View>

@@ -1,8 +1,19 @@
 import { Colors } from "@/assets/Colors";
 import { formatCurrency } from "@/src/utils/formatCurrency";
 import { Asset } from "@/src/interfaces/investments.interface";
-import React, { useState } from "react";
-import { Text, View, TouchableOpacity, StyleSheet } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  Text,
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  TextInput,
+  Keyboard,
+  Platform,
+  InputAccessoryView,
+} from "react-native";
+
+const BRICKS_INPUT_ACCESSORY_ID = "bricks-count-input";
 
 export const LeasingResume = ({
   asset,
@@ -16,22 +27,51 @@ export const LeasingResume = ({
   handleBuyAsset: (bricksCount: number) => void;
 }) => {
   const [bricksCount, setBricksCount] = useState(0);
+  const [bricksInput, setBricksInput] = useState("0");
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const pricePerToken = asset.pricePerToken;
   const totalInvestment = bricksCount * pricePerToken;
   const noTokens = soldOut === true || (asset.tokensAvailable ?? 0) <= 0;
 
+  // On Android the window resizes with the keyboard, so the floating card moves up on its own;
+  // on iOS it has to be lifted manually or the keyboard covers the input.
+  useEffect(() => {
+    if (Platform.OS !== "ios") return;
+    const show = Keyboard.addListener("keyboardWillShow", (e) => setKeyboardHeight(e.endCoordinates.height));
+    const hide = Keyboard.addListener("keyboardWillHide", () => setKeyboardHeight(0));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+
+  const updateBricks = (count: number) => {
+    setBricksCount(count);
+    setBricksInput(String(count));
+  };
+
   const incrementBricks = () => {
     if (noTokens) return;
     if (bricksCount < asset.tokensAvailable) {
-      setBricksCount(prev => prev + 1);
+      updateBricks(bricksCount + 1);
     }
   };
 
   const decrementBricks = () => {
     if (noTokens) return;
     if (bricksCount > 0) {
-      setBricksCount(prev => prev - 1);
+      updateBricks(bricksCount - 1);
     }
+  };
+
+  const handleBricksInputChange = (text: string) => {
+    const digits = text.replace(/[^0-9]/g, "");
+    if (digits === "") {
+      setBricksCount(0);
+      setBricksInput("");
+      return;
+    }
+    updateBricks(Math.min(parseInt(digits, 10), asset.tokensAvailable ?? 0));
   };
 
   const disabled = noTokens || bricksCount === 0 || bricksCount > asset.tokensAvailable;
@@ -45,7 +85,7 @@ export const LeasingResume = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, keyboardHeight > 0 && { bottom: keyboardHeight }]}>
       <View className="bg-white rounded-t-3xl p-6 border-t border-gray-100" style={thinShadow}>
         <View className="mb-4 flex-row justify-between items-center">
           <Text className="text-base font-libre-regular text-blue-primary">Número de bricks</Text>
@@ -58,9 +98,23 @@ export const LeasingResume = ({
             >
               <Text className="text-lg font-libre-medium text-blue-primary">-</Text>
             </TouchableOpacity>
-            <Text className="min-w-[44px] text-center text-base font-libre-medium text-blue-primary">
-              {bricksCount}
-            </Text>
+            <TextInput
+              value={bricksInput}
+              onChangeText={handleBricksInputChange}
+              onFocus={() => {
+                if (bricksCount === 0) setBricksInput("");
+              }}
+              onBlur={() => setBricksInput(String(bricksCount))}
+              keyboardType="number-pad"
+              returnKeyType="done"
+              selectTextOnFocus
+              editable={!noTokens}
+              maxLength={String(asset.tokensAvailable ?? 0).length}
+              inputAccessoryViewID={Platform.OS === "ios" ? BRICKS_INPUT_ACCESSORY_ID : undefined}
+              accessibilityLabel="Número de bricks"
+              className="min-w-[44px] text-center text-base font-libre-medium text-blue-primary"
+              style={{ paddingVertical: 0 }}
+            />
             <TouchableOpacity
               onPress={incrementBricks}
               className="w-10 h-10 items-center justify-center"
@@ -85,6 +139,7 @@ export const LeasingResume = ({
           className="rounded-full py-4 items-center"
           onPress={() => {
             if (noTokens) return;
+            Keyboard.dismiss();
             handleBuyAsset(bricksCount);
           }}
           style={[
@@ -101,6 +156,15 @@ export const LeasingResume = ({
           </Text>
         </TouchableOpacity>
       </View>
+      {Platform.OS === "ios" && (
+        <InputAccessoryView nativeID={BRICKS_INPUT_ACCESSORY_ID}>
+          <View className="flex-row justify-end bg-gray-100 border-t border-gray-200 px-4 py-2">
+            <TouchableOpacity onPress={Keyboard.dismiss}>
+              <Text className="text-base font-libre-medium text-blue-primary">Listo</Text>
+            </TouchableOpacity>
+          </View>
+        </InputAccessoryView>
+      )}
     </View>
   );
 };
