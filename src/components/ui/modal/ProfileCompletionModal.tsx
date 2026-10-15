@@ -1,4 +1,5 @@
-import { Modal, View, Text, TouchableOpacity, SafeAreaView, Alert, Image, ActivityIndicator } from "react-native";
+import { Modal, View, Text, TouchableOpacity, Alert, Image, ActivityIndicator, ScrollView } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
 import { Button } from "../button/Button";
 import { Ionicons } from "@expo/vector-icons";
@@ -35,6 +36,7 @@ export const ProfileCompletionModal = ({
   onClose,
   onCompleteProfile,
 }: ProfileCompletionModalProps) => {
+  const insets = useSafeAreaInsets();
   const { user } = authStore();
   const [isUploading, setIsUploading] = useState(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
@@ -263,19 +265,28 @@ export const ProfileCompletionModal = ({
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <SafeAreaView
-        className="flex-1 justify-center items-center bg-violet-primary/80"
+      {/* With both documents loaded the card is taller than some screens: it scrolls inside the safe
+          area, and the close button lives in the card instead of floating over the status bar. */}
+      <ScrollView
+        className="flex-1 bg-violet-primary/80"
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          paddingTop: insets.top + 12,
+          paddingBottom: insets.bottom + 12,
+        }}
       >
-        <View className="flex-row justify-end items-end w-full px-5">
-          <TouchableOpacity className="flex-row items-center justify-center" onPress={onClose}>
-            <Ionicons
-              name="close-circle"
-              size={26}
-              color={Colors.white}
-            />
-          </TouchableOpacity>
-        </View>
         <View className="flex flex-col gap-6 m-5 bg-white rounded-xl p-11 items-center shadow-lg max-w-[90%]">
+          <TouchableOpacity
+            className="absolute top-3 right-3"
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Cerrar"
+            hitSlop={10}
+          >
+            <Ionicons name="close-circle" size={28} color={Colors.bluePrimary} />
+          </TouchableOpacity>
           <Ionicons
             name="document-text"
             size={32}
@@ -302,8 +313,7 @@ export const ProfileCompletionModal = ({
             />
           )}
         </View>
-
-      </SafeAreaView>
+      </ScrollView>
     </Modal>
   );
 };

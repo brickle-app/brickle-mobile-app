@@ -155,6 +155,11 @@ export const LeasingResume = ({
             {noTokens ? "Agotado" : "Comprar bricks"}
           </Text>
         </TouchableOpacity>
+        {isBlocked && !noTokens && (
+          <Text className="mt-2 text-center text-xs font-libre-regular text-gray-600">
+            Podrás comprar cuando tu perfil esté verificado.
+          </Text>
+        )}
       </View>
       {Platform.OS === "ios" && (
         <InputAccessoryView nativeID={BRICKS_INPUT_ACCESSORY_ID}>

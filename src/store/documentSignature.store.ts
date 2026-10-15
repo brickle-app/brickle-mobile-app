@@ -3,6 +3,8 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export interface DocumentSignatureRecord {
+  /** Owner of the signature: several accounts can sign in on the same device. */
+  userId: string;
   documentId: string;
   /** Path data (SVG "d" attributes) captured from the on-screen signature pad. */
   svgPaths: string[];
@@ -11,10 +13,12 @@ export interface DocumentSignatureRecord {
 }
 
 interface DocumentSignatureState {
-  signatures: Record<string, DocumentSignatureRecord>;
+  /** userId -> documentId -> signature */
+  signatures: Record<string, Record<string, DocumentSignatureRecord>>;
   saveSignature: (record: DocumentSignatureRecord) => void;
-  clearSignature: (documentId: string) => void;
-  isSigned: (documentId: string) => boolean;
+  clearSignature: (userId: string, documentId: string) => void;
+  getSignature: (userId: string | undefined, documentId: string) => DocumentSignatureRecord | undefined;
+  isSigned: (userId: string | undefined, documentId: string) => boolean;
 }
 
 export const documentSignatureStore = create<DocumentSignatureState>()(
@@ -23,19 +27,28 @@ export const documentSignatureStore = create<DocumentSignatureState>()(
       signatures: {},
       saveSignature: (record) =>
         set((state) => ({
-          signatures: { ...state.signatures, [record.documentId]: record },
+          signatures: {
+            ...state.signatures,
+            [record.userId]: { ...state.signatures[record.userId], [record.documentId]: record },
+          },
         })),
-      clearSignature: (documentId) =>
+      clearSignature: (userId, documentId) =>
         set((state) => {
-          const next = { ...state.signatures };
-          delete next[documentId];
-          return { signatures: next };
+          const forUser = { ...state.signatures[userId] };
+          delete forUser[documentId];
+          return { signatures: { ...state.signatures, [userId]: forUser } };
         }),
-      isSigned: (documentId) => Boolean(get().signatures[documentId]),
+      getSignature: (userId, documentId) =>
+        userId ? get().signatures[userId]?.[documentId] : undefined,
+      isSigned: (userId, documentId) => Boolean(get().getSignature(userId, documentId)),
     }),
     {
       name: "document-signature-storage",
       storage: createJSONStorage(() => AsyncStorage),
+      // v0 stored signatures by documentId only, so a new account on the same device appeared as
+      // having signed. Those records can't be attributed to a user, so they are dropped.
+      version: 1,
+      migrate: () => ({ signatures: {} }) as Partial<DocumentSignatureState> as DocumentSignatureState,
     }
   )
 );

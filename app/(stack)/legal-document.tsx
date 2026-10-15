@@ -28,11 +28,12 @@ function normalizeParam(value: string | string[] | undefined): string | undefine
 
 const LegalDocumentScreen = () => {
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ documentId?: string }>();
+  const params = useLocalSearchParams<{ documentId?: string; signerName?: string }>();
   const documentId = normalizeParam(params.documentId);
+  const signerNameParam = normalizeParam(params.signerName)?.trim();
   const user = authStore((state) => state.user);
   const existingSignature = documentSignatureStore((state) =>
-    documentId ? state.signatures[documentId] : undefined
+    documentId && user?.id ? state.signatures[user.id]?.[documentId] : undefined
   );
   const saveSignature = documentSignatureStore((state) => state.saveSignature);
 
@@ -46,6 +47,7 @@ const LegalDocumentScreen = () => {
     existingSignature?.svgPaths ?? []
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDrawing, setIsDrawing] = useState(false);
 
   if (!document || !document.content) {
     return (
@@ -62,7 +64,8 @@ const LegalDocumentScreen = () => {
 
   const isEmptySignature = svgPaths.length === 0;
   const canConfirm = hasReadToEnd && !isEmptySignature;
-  const signerName = [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim();
+  const signerName =
+    signerNameParam || [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim();
 
   async function handleConfirm() {
     if (!canConfirm || isSubmitting) return;
@@ -84,12 +87,15 @@ const LegalDocumentScreen = () => {
         );
       }
 
-      saveSignature({
-        documentId: document!.id,
-        svgPaths,
-        signedAt,
-        signerName: finalSignerName,
-      });
+      if (user?.id) {
+        saveSignature({
+          userId: user.id,
+          documentId: document!.id,
+          svgPaths,
+          signedAt,
+          signerName: finalSignerName,
+        });
+      }
 
       Alert.alert("Documento firmado", `Has firmado "${document!.title}" correctamente.`, [
         { text: "Continuar", onPress: () => router.back() },
@@ -133,6 +139,7 @@ const LegalDocumentScreen = () => {
             if (reachedBottom && !hasReadToEnd) setHasReadToEnd(true);
           }}
           scrollEventThrottle={100}
+          scrollEnabled={!isDrawing}
         >
           <Text className="font-libre-regular text-sm text-text-primary leading-6">
             {document.content}
@@ -156,7 +163,7 @@ const LegalDocumentScreen = () => {
                   : "Desplázate hasta el final del documento para poder firmar"}
               </Text>
               {hasReadToEnd ? (
-                <SignaturePad onChange={setSvgPaths} />
+                <SignaturePad onChange={setSvgPaths} onDrawingChange={setIsDrawing} />
               ) : (
                 <View className="w-full h-[180px] rounded-xl border border-gray-200 bg-gray-50 items-center justify-center">
                   <Text className="text-text-secondary font-libre-regular text-xs">

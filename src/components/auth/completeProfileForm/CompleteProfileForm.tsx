@@ -6,7 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import React from "react";
+import React, { useCallback, useRef } from "react";
 import { useCompleteProfileForm } from "@/src/hooks/auth/useCompleteProfileForm";
 import { Ionicons } from "@expo/vector-icons";
 import StepIndicator from "./StepIndicator";
@@ -40,17 +40,30 @@ const CompleteProfileForm = () => {
     isLoading,
   } = useCompleteProfileForm();
 
-  return (
-    <KeyboardAvoidingView
-      className="flex-1"
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 25}
-    >
+  // Same approach as the register screen: on iOS the ScrollView insets itself for the keyboard and
+  // we scroll the focused field into view; without it the lower fields stayed under the keyboard.
+  const scrollViewRef = useRef<ScrollView>(null);
+  const headerOffsetRef = useRef(0);
+  const fieldsBlockYRef = useRef(0);
+  const fieldYRef = useRef<Record<string, number>>({});
+
+  const scrollFieldIntoView = useCallback((fieldId: string) => {
+    const y = Math.max(0, fieldsBlockYRef.current + (fieldYRef.current[fieldId] ?? 0) - 56);
+    const runScroll = () => scrollViewRef.current?.scrollTo({ y, animated: true });
+    runScroll();
+    setTimeout(runScroll, 120);
+    setTimeout(runScroll, 320);
+  }, []);
+
+  const body = (
       <ScrollView
+        ref={scrollViewRef}
         className="flex-1"
         contentContainerClassName="flex-grow"
+        contentContainerStyle={{ paddingBottom: 96 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        automaticallyAdjustKeyboardInsets
       >
         <View className="flex-row justify-start items-start w-full px-6">
           <TouchableOpacity className="flex-row items-center justify-center gap-2" onPress={goBackOrDashboard}>
@@ -64,8 +77,18 @@ const CompleteProfileForm = () => {
             </Text>
           </TouchableOpacity>
         </View>
-        <View className="flex-1 flex justify-around items-center p-6">
-          <View className="flex flex-col justify-center items-center w-full gap-4">
+        <View
+          className="flex-1 flex justify-around items-center p-6"
+          onLayout={(e) => {
+            headerOffsetRef.current = e.nativeEvent.layout.y;
+          }}
+        >
+          <View
+            className="flex flex-col justify-center items-center w-full gap-4"
+            onLayout={(e) => {
+              headerOffsetRef.current += e.nativeEvent.layout.y;
+            }}
+          >
             {/* Header and Step Indicator */}
             <View className="items-center mb-6">
               <Ionicons
@@ -80,7 +103,13 @@ const CompleteProfileForm = () => {
             <StepIndicator currentStep={currentStep} totalSteps={totalSteps} />
 
             {/* Form Fields */}
-            <View className="flex w-full flex-col justify-center items-center gap-4">
+            <View
+              className="flex w-full flex-col justify-center items-center gap-4"
+              onLayout={(e) => {
+                // y inside the header column, which starts after the back row (≈ its own y offset)
+                fieldsBlockYRef.current = e.nativeEvent.layout.y + headerOffsetRef.current;
+              }}
+            >
               {stepKind === "consent" ? (
                 <ConsentStep
                   formData={formData}
@@ -93,11 +122,16 @@ const CompleteProfileForm = () => {
                   return (
                     <SelectBottomSheet
                       key={field.id}
+                      label={field.label}
+                      placeholder={field.placeholder}
                       value={String(formData[field.id as keyof CompleteProfileFormData])}
-                      options={field.options.map((option) => ({
-                        label: option.label,
-                        value: option.value.toString(),
-                      }))}
+                      // The "Selecciona…" entry is the placeholder, not a choice
+                      options={field.options
+                        .filter((option) => option.value !== "")
+                        .map((option) => ({
+                          label: option.label,
+                          value: option.value.toString(),
+                        }))}
                       onValueChange={(value) => {
                         const fieldKey = field.id as keyof CompleteProfileFormData;
                         if (fieldKey === 'documentType') {
@@ -130,8 +164,14 @@ const CompleteProfileForm = () => {
                 }
 
                 return (
-                  <FormField
+                  <View
                     key={field.id}
+                    className="w-full"
+                    onLayout={(e) => {
+                      fieldYRef.current[field.id] = e.nativeEvent.layout.y;
+                    }}
+                  >
+                  <FormField
                     label={field.label}
                     placeholder={field.placeholder}
                     icon={field.icon}
@@ -150,7 +190,9 @@ const CompleteProfileForm = () => {
                     error={errors[field.id as keyof CompleteProfileFormData]}
                     containerClassName="w-full"
                     inputWrapperClassName="!w-full"
+                    onFocus={() => scrollFieldIntoView(field.id)}
                   />
+                  </View>
                 );
                 })
               )}
@@ -177,7 +219,14 @@ const CompleteProfileForm = () => {
           </View>
         </View>
       </ScrollView>
+  );
+
+  return Platform.OS === "android" ? (
+    <KeyboardAvoidingView className="flex-1" behavior="height" keyboardVerticalOffset={25}>
+      {body}
     </KeyboardAvoidingView>
+  ) : (
+    body
   );
 };
 

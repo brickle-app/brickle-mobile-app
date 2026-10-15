@@ -27,6 +27,13 @@ const initialFormData: CompleteProfileFormData = {
   acceptsOriginOfFundsDeclaration: false,
 };
 
+// The API creates OTP accounts with the e-mail's local part as first name; don't offer that as a name.
+function defaultFirstName(firstName?: string | null, email?: string | null): string {
+  if (!firstName) return "";
+  const emailLocalPart = email?.split("@")[0];
+  return emailLocalPart && firstName.trim().toLowerCase() === emailLocalPart.toLowerCase() ? "" : firstName;
+}
+
 export function useCompleteProfileForm() {
   const user = authStore((state) => state.user);
   const setUser = authStore((state) => state.setUser);
@@ -34,7 +41,7 @@ export function useCompleteProfileForm() {
   const [formData, setFormData] =
     useState<CompleteProfileFormData>({
       ...initialFormData,
-      firstName: user?.firstName ?? "",
+      firstName: defaultFirstName(user?.firstName, user?.email),
       lastName: user?.lastName ?? "",
       phoneNumber: user?.phoneNumber ?? "",
     });

@@ -7,6 +7,7 @@ import { Colors } from "@/assets/Colors";
 import { CompleteProfileFormData } from "@/src/schemes/complete-profile-scheme";
 import { PROFILE_CONSENT_DOCUMENTS } from "@/src/constants/legal-documents";
 import { documentSignatureStore } from "@/src/store/documentSignature.store";
+import { authStore } from "@/src/store/auth.store";
 
 type ConsentFieldKey =
   | "acceptsTermsAndConditions"
@@ -39,6 +40,7 @@ interface ConsentStepProps {
 
 const ConsentStep = ({ formData, errors, onChange }: ConsentStepProps) => {
   const isSigned = documentSignatureStore((state) => state.isSigned);
+  const userId = authStore((state) => state.user?.id);
 
   // When returning from the in-app document/signature screen, sync the
   // checkbox with whatever was actually signed there.
@@ -46,18 +48,21 @@ const ConsentStep = ({ formData, errors, onChange }: ConsentStepProps) => {
     useCallback(() => {
       CONSENT_ITEMS.forEach(({ field, documentId }) => {
         const document = PROFILE_CONSENT_DOCUMENTS.find((doc) => doc.id === documentId);
-        if (document?.requiresSignature && isSigned(documentId) && !formData[field]) {
+        if (document?.requiresSignature && isSigned(userId, documentId) && !formData[field]) {
           onChange(field, true);
         }
       });
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [formData])
+    }, [formData, userId])
   );
 
   function openDocument(documentId: string, url: string, title: string) {
     const document = PROFILE_CONSENT_DOCUMENTS.find((doc) => doc.id === documentId);
     if (document?.requiresSignature) {
-      router.push({ pathname: "/legal-document", params: { documentId } });
+      // The profile isn't saved yet at this step, so the stored user still has the API's
+      // placeholder name; sign with the name typed in step 1.
+      const signerName = [formData.firstName, formData.lastName].filter(Boolean).join(" ").trim();
+      router.push({ pathname: "/legal-document", params: { documentId, signerName } });
       return;
     }
     router.push({ pathname: "/webview", params: { url, title } });

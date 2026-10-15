@@ -50,6 +50,7 @@ const DashboardScreen = () => {
   const user = authStore((state) => state.user);
   const setUser = authStore((state) => state.setUser);
   const shouldShowDocumentCta = needsIdentityDocument(user);
+  const isAwaitingReview = Boolean(user?.isProfileUnderReview && !user?.isFullProfileComplete);
   const shouldShowWalletActivationCta = Boolean(
     user?.isFullProfileComplete && !user.isProfileUnderReview && !user.walletAddress
   );
@@ -221,8 +222,8 @@ const DashboardScreen = () => {
             />
           )}
 
-          {shouldShowDocumentCta && (
-            <ProfileDocumentCta onPress={handleUploadDocument} />
+          {(shouldShowDocumentCta || isAwaitingReview) && (
+            <ProfileDocumentCta onPress={handleUploadDocument} underReview={isAwaitingReview} />
           )}
 
           {shouldShowWalletActivationCta && (

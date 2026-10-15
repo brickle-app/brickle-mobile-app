@@ -26,6 +26,9 @@ export const PinInput: React.FC<PinInputProps> = ({
             setPin(newPin);
             if (newPin.length === length) {
                 onComplete(newPin);
+                // Start over after every attempt: after a wrong PIN the dots stayed full and further
+                // digits were ignored, so the user could not retry without deleting each one.
+                setTimeout(() => setPin(''), 300);
             }
         }
     };

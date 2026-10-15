@@ -95,7 +95,14 @@ export default function RootLayout() {
           return; // Still set appIsReady so app doesn't hang
         }
         console.log('✅ Environment validation passed');
-        await restoreSessionFromRefreshToken();
+        const sessionRestored = await restoreSessionFromRefreshToken();
+        // The PIN only locked on going to background, so if iOS killed the app while it was in the
+        // foreground (crash, memory, permission change) it reopened unlocked. Lock every cold start
+        // that resumes a session; lock() is a no-op when no PIN is set.
+        if (sessionRestored) {
+          if (!usePinStore.persist.hasHydrated()) await usePinStore.persist.rehydrate();
+          usePinStore.getState().lock();
+        }
       } catch (error) {
         console.error("❌ Error preparing app session:", error);
       } finally {

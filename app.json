@@ -20,9 +20,9 @@
       "bundleIdentifier": "com.brickle.app",
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "This app uses the camera for KYC verification and document scanning.",
-        "NSPhotoLibraryUsageDescription": "This app needs access to your photos to upload documents for KYC verification.",
-        "NSFaceIDUsageDescription": "This app uses Face ID for secure authentication.",
+        "NSCameraUsageDescription": "Brickle usa la cámara para tomar la foto de tus documentos y verificar tu identidad.",
+        "NSPhotoLibraryUsageDescription": "Brickle necesita acceso a tus fotos para que subas tu documento de identidad y tu certificado bancario.",
+        "NSFaceIDUsageDescription": "Brickle usa Face ID para proteger el acceso a tu cuenta.",
         "ITSAppUsesNonExemptEncryption": false,
         "UIStatusBarStyle": "UIStatusBarStyleDarkContent",
         "UIViewControllerBasedStatusBarAppearance": false
@@ -162,7 +162,7 @@
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "Allow $(PRODUCT_NAME) to use Face ID."
+          "faceIDPermission": "Brickle usa Face ID para proteger el acceso a tu cuenta."
         }
       ],
       "expo-web-browser",
