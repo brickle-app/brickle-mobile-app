@@ -154,7 +154,8 @@
             "fonts": [
               "node_modules/@expo-google-fonts/libre-franklin/300Light/LibreFranklin_300Light.ttf",
               "node_modules/@expo-google-fonts/libre-franklin/400Regular/LibreFranklin_400Regular.ttf",
-              "node_modules/@expo-google-fonts/libre-franklin/700Bold/LibreFranklin_700Bold.ttf","node_modules/@expo-google-fonts/libre-franklin/500Medium/LibreFranklin_500Medium.ttf"
+              "node_modules/@expo-google-fonts/libre-franklin/700Bold/LibreFranklin_700Bold.ttf",
+              "node_modules/@expo-google-fonts/libre-franklin/500Medium/LibreFranklin_500Medium.ttf"
             ]
           }
         }
@@ -168,7 +169,17 @@
       "expo-web-browser",
       "expo-camera",
       "expo-image-picker",
-      "expo-file-system"
+      "expo-file-system",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36,
+            "buildToolsVersion": "36.0.0"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
