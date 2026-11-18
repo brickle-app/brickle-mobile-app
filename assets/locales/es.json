@@ -1,0 +1,8 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Brickle",
+    "NSCameraUsageDescription": "Brickle usa la cámara para tomar la foto de tus documentos y verificar tu identidad.",
+    "NSPhotoLibraryUsageDescription": "Brickle necesita acceso a tus fotos para que subas tu documento de identidad y tu certificado bancario.",
+    "NSFaceIDUsageDescription": "Brickle usa Face ID para proteger el acceso a tu cuenta."
+  }
+}

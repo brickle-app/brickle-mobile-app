@@ -49,3 +49,6 @@ android/
 ios/
 .opencode/*
 docs/qa/*
+# Local EAS build outputs
+*.aab
+*.apk

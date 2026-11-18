@@ -3,7 +3,7 @@
     "name": "Brickle",
     "slug": "brickle",
     "developmentClient": {},
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/splash-icon.png",
     "scheme": [
@@ -12,6 +12,9 @@
     ],
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "locales": {
+      "es": "./assets/locales/es.json"
+    },
     "ios": {
       "buildNumber": "98",
       "associatedDomains": [
@@ -25,7 +28,12 @@
         "NSFaceIDUsageDescription": "Brickle usa Face ID para proteger el acceso a tu cuenta.",
         "ITSAppUsesNonExemptEncryption": false,
         "UIStatusBarStyle": "UIStatusBarStyleDarkContent",
-        "UIViewControllerBasedStatusBarAppearance": false
+        "UIViewControllerBasedStatusBarAppearance": false,
+        "CFBundleDevelopmentRegion": "es",
+        "CFBundleLocalizations": [
+          "es"
+        ],
+        "CFBundleAllowMixedLocalizations": true
       }
     },
     "android": {
